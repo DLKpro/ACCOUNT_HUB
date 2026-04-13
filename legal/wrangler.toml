@@ -1,6 +1,7 @@
 name = "accounthub-legal"
 main = "src/worker.js"
 compatibility_date = "2024-01-01"
+account_id = "dd5b8101bfaf4d955f454b71db60b966"
 
 [triggers]
 crons = []

@@ -1,18 +1,15 @@
 from __future__ import annotations
 
-from typing import List, Optional
-
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import Response
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from account_hub.api.limiter import limiter
-
 from account_hub.api.dependencies import get_current_user, get_db
+from account_hub.api.limiter import limiter
 from account_hub.db.models import User
 from account_hub.services.discovery_service import (
-    ScanNotFound,
+    ScanNotFoundError,
     get_scan_history,
     get_scan_results,
     get_scan_session,
@@ -35,11 +32,11 @@ class DiscoveredAccountResponse(BaseModel):
     id: str
     email_address: str
     service_name: str
-    service_domain: Optional[str] = None
+    service_domain: str | None = None
     source: str
     confidence: str
-    breach_date: Optional[str] = None
-    discovered_at: Optional[str] = None
+    breach_date: str | None = None
+    discovered_at: str | None = None
 
 
 class ScanDetailResponse(BaseModel):
@@ -47,9 +44,9 @@ class ScanDetailResponse(BaseModel):
     status: str
     emails_scanned: int
     accounts_found: int
-    started_at: Optional[str] = None
-    completed_at: Optional[str] = None
-    results: List[DiscoveredAccountResponse] = []
+    started_at: str | None = None
+    completed_at: str | None = None
+    results: list[DiscoveredAccountResponse] = []
 
 
 class ScanSummaryResponse(BaseModel):
@@ -57,7 +54,7 @@ class ScanSummaryResponse(BaseModel):
     status: str
     emails_scanned: int
     accounts_found: int
-    created_at: Optional[str] = None
+    created_at: str | None = None
 
 
 # --- Endpoints ---
@@ -78,7 +75,7 @@ async def create_scan(
     )
 
 
-@router.get("/history", response_model=List[ScanSummaryResponse])
+@router.get("/history", response_model=list[ScanSummaryResponse])
 async def scan_history(
     limit: int = 10,
     offset: int = 0,
@@ -115,7 +112,7 @@ async def get_scan(
 
     try:
         session = await get_scan_session(db, current_user.id, sid)
-    except ScanNotFound:
+    except ScanNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scan not found")
 
     results = await get_scan_results(db, session.id)
@@ -159,7 +156,7 @@ async def export_scan(
 
     try:
         await get_scan_session(db, current_user.id, sid)
-    except ScanNotFound:
+    except ScanNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scan not found")
 
     results = await get_scan_results(db, sid)

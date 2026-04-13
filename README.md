@@ -101,7 +101,7 @@ tests/                            # 164+ tests (unit + integration)
 
 ### Prerequisites
 
-- Python 3.9+
+- Python 3.11+
 - PostgreSQL
 - OAuth app credentials for each provider (Google, Microsoft, Apple, Meta)
 

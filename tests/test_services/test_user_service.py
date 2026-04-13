@@ -1,6 +1,5 @@
 """Unit tests for user_service — operates against the test database."""
 import pytest
-import pytest_asyncio
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -8,10 +7,10 @@ from account_hub.db.models import User
 from account_hub.security.hashing import verify_password
 from account_hub.security.jwt import decode_token
 from account_hub.services.user_service import (
-    InvalidCredentials,
-    InvalidToken,
-    UsernameInvalid,
-    UsernameTaken,
+    InvalidCredentialsError,
+    InvalidTokenError,
+    UsernameInvalidError,
+    UsernameTakenError,
     authenticate_user,
     delete_account,
     refresh_tokens,
@@ -51,20 +50,20 @@ async def test_register_user_lowercases_username(db_session: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_register_invalid_username_raises(db_session: AsyncSession):
-    with pytest.raises(UsernameInvalid):
+    with pytest.raises(UsernameInvalidError):
         await register_user(db_session, "ab", "pass")  # too short
 
-    with pytest.raises(UsernameInvalid):
+    with pytest.raises(UsernameInvalidError):
         await register_user(db_session, "has spaces", "pass")
 
-    with pytest.raises(UsernameInvalid):
+    with pytest.raises(UsernameInvalidError):
         await register_user(db_session, "CAPS!", "pass")
 
 
 @pytest.mark.asyncio
 async def test_register_duplicate_username_raises(db_session: AsyncSession):
     await register_user(db_session, "unique_user", "pass1")
-    with pytest.raises(UsernameTaken):
+    with pytest.raises(UsernameTakenError):
         await register_user(db_session, "unique_user", "pass2")
 
 
@@ -79,13 +78,13 @@ async def test_authenticate_user_succeeds(db_session: AsyncSession):
 @pytest.mark.asyncio
 async def test_authenticate_wrong_password_raises(db_session: AsyncSession):
     await register_user(db_session, "wrongpass", "right")
-    with pytest.raises(InvalidCredentials):
+    with pytest.raises(InvalidCredentialsError):
         await authenticate_user(db_session, "wrongpass", "wrong")
 
 
 @pytest.mark.asyncio
 async def test_authenticate_nonexistent_user_raises(db_session: AsyncSession):
-    with pytest.raises(InvalidCredentials):
+    with pytest.raises(InvalidCredentialsError):
         await authenticate_user(db_session, "ghost_user", "anything")
 
 
@@ -101,13 +100,13 @@ async def test_refresh_tokens_returns_valid_pair(db_session: AsyncSession):
 @pytest.mark.asyncio
 async def test_refresh_with_access_token_raises(db_session: AsyncSession):
     _, tokens = await register_user(db_session, "badrefresh", "pass")
-    with pytest.raises(InvalidToken):
+    with pytest.raises(InvalidTokenError):
         await refresh_tokens(db_session, tokens.access_token)  # wrong token type
 
 
 @pytest.mark.asyncio
 async def test_refresh_with_garbage_raises(db_session: AsyncSession):
-    with pytest.raises(InvalidToken):
+    with pytest.raises(InvalidTokenError):
         await refresh_tokens(db_session, "not-a-token")
 
 
@@ -122,5 +121,5 @@ async def test_delete_account_removes_user(db_session: AsyncSession):
 @pytest.mark.asyncio
 async def test_delete_account_wrong_password_raises(db_session: AsyncSession):
     user, _ = await register_user(db_session, "nodelete", "correct")
-    with pytest.raises(InvalidCredentials):
+    with pytest.raises(InvalidCredentialsError):
         await delete_account(db_session, user, "wrong")

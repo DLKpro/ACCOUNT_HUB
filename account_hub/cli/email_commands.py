@@ -4,7 +4,6 @@ import http.server
 import threading
 import time
 import webbrowser
-from typing import Optional
 from urllib.parse import parse_qs, urlparse
 
 import typer
@@ -20,8 +19,8 @@ console = Console()
 class _CallbackHandler(http.server.BaseHTTPRequestHandler):
     """Tiny HTTP handler that catches the OAuth redirect callback."""
 
-    code: Optional[str] = None
-    state: Optional[str] = None
+    code: str | None = None
+    state: str | None = None
     received = threading.Event()
 
     def do_GET(self):
@@ -120,7 +119,8 @@ def _loopback_flow(client, provider: str) -> None:
     elif resp.status_code == 409:
         console.print(f"[yellow]{resp.json().get('detail', 'Email already linked')}[/yellow]")
     else:
-        console.print(f"[red]Error: {resp.status_code} — {resp.json().get('detail', resp.text)}[/red]")
+        detail = resp.json().get("detail", resp.text)
+        console.print(f"[red]Error: {resp.status_code} — {detail}[/red]")
         raise typer.Exit(1)
 
 

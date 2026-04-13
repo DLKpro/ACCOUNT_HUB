@@ -1,7 +1,5 @@
 """Unit tests for CLI helpers — credential file I/O."""
 import json
-import os
-from pathlib import Path
 
 import pytest
 

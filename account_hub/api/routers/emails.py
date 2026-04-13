@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import List, Optional
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,8 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from account_hub.api.dependencies import get_current_user, get_db
 from account_hub.db.models import User
 from account_hub.services.email_service import (
-    EmailNotFound,
-    LinkedEmailInfo,
+    EmailNotFoundError,
     list_linked_emails,
     unlink_email,
 )
@@ -26,7 +23,7 @@ class LinkedEmailResponse(BaseModel):
     linked_at: str
 
 
-@router.get("", response_model=List[LinkedEmailResponse])
+@router.get("", response_model=list[LinkedEmailResponse])
 async def list_emails(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -59,5 +56,5 @@ async def delete_email(
 
     try:
         await unlink_email(db, current_user.id, eid)
-    except EmailNotFound:
+    except EmailNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Linked email not found")

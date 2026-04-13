@@ -4,7 +4,7 @@ Provides an async SQLite database and a FastAPI test client that uses it,
 so tests run without a real PostgreSQL instance.
 """
 import asyncio
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import pytest
 import pytest_asyncio

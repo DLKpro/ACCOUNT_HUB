@@ -1,20 +1,17 @@
 from __future__ import annotations
 
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from account_hub.api.limiter import limiter
-
 from account_hub.api.dependencies import get_current_user, get_db
+from account_hub.api.limiter import limiter
 from account_hub.db.models import User
 from account_hub.services.user_service import (
-    InvalidCredentials,
-    InvalidToken,
-    UsernameInvalid,
-    UsernameTaken,
+    InvalidCredentialsError,
+    InvalidTokenError,
+    UsernameInvalidError,
+    UsernameTakenError,
     authenticate_user,
     delete_account,
     refresh_tokens,
@@ -62,7 +59,7 @@ class RegisterResponse(BaseModel):
 class UserResponse(BaseModel):
     id: str
     username: str
-    email: Optional[str] = None
+    email: str | None = None
     is_active: bool
     created_at: str
 
@@ -75,9 +72,9 @@ class UserResponse(BaseModel):
 async def register(request: Request, body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     try:
         user, tokens = await register_user(db, body.username, body.password)
-    except UsernameInvalid as e:
+    except UsernameInvalidError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except UsernameTaken as e:
+    except UsernameTakenError as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
 
     return RegisterResponse(
@@ -93,7 +90,7 @@ async def register(request: Request, body: RegisterRequest, db: AsyncSession = D
 async def login(request: Request, body: LoginRequest, db: AsyncSession = Depends(get_db)):
     try:
         _user, tokens = await authenticate_user(db, body.username, body.password)
-    except InvalidCredentials as e:
+    except InvalidCredentialsError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
     return TokenResponse(
@@ -106,7 +103,7 @@ async def login(request: Request, body: LoginRequest, db: AsyncSession = Depends
 async def refresh(body: RefreshRequest, db: AsyncSession = Depends(get_db)):
     try:
         tokens = await refresh_tokens(db, body.refresh_token)
-    except InvalidToken as e:
+    except InvalidTokenError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
     return TokenResponse(
@@ -134,5 +131,5 @@ async def delete_my_account(
 ):
     try:
         await delete_account(db, current_user, body.password)
-    except InvalidCredentials as e:
+    except InvalidCredentialsError as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))

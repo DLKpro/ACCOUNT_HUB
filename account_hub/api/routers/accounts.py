@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import uuid
-from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
@@ -10,11 +9,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from account_hub.api.dependencies import get_current_user, get_db
 from account_hub.db.models import User
 from account_hub.services.closure_service import (
-    AccountNotFound,
-    RequestNotFound,
+    AccountNotFoundError,
+    RequestNotFoundError,
     complete_closure,
     get_closure_info,
-    get_closure_request,
     list_closure_requests,
     request_closure,
 )
@@ -27,7 +25,7 @@ router = APIRouter(prefix="/accounts", tags=["accounts"])
 
 class ClosureInfoResponse(BaseModel):
     service_name: str
-    deletion_url: Optional[str] = None
+    deletion_url: str | None = None
     difficulty: str
     method: str
     notes: str
@@ -38,10 +36,10 @@ class ClosureRequestResponse(BaseModel):
     service_name: str
     method: str
     status: str
-    deletion_url: Optional[str] = None
+    deletion_url: str | None = None
     requested_at: str
-    completed_at: Optional[str] = None
-    notes: Optional[str] = None
+    completed_at: str | None = None
+    notes: str | None = None
 
 
 class RequestCloseBody(BaseModel):
@@ -69,7 +67,7 @@ async def create_closure_request(
 
     try:
         closure = await request_closure(db, current_user.id, account_id)
-    except AccountNotFound:
+    except AccountNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found")
 
     return ClosureRequestResponse(
@@ -97,7 +95,7 @@ async def mark_closure_complete(
 
     try:
         closure = await complete_closure(db, current_user.id, request_id)
-    except RequestNotFound:
+    except RequestNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Request not found")
 
     return ClosureRequestResponse(
@@ -112,7 +110,7 @@ async def mark_closure_complete(
     )
 
 
-@router.get("/close-requests", response_model=List[ClosureRequestResponse])
+@router.get("/close-requests", response_model=list[ClosureRequestResponse])
 async def list_requests(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

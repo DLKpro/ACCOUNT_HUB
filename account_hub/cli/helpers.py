@@ -2,16 +2,12 @@ from __future__ import annotations
 
 import json
 import os
-import stat
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Optional
 
 import httpx
-from jose import JWTError
 
 from account_hub.config import settings
-from account_hub.security.jwt import decode_token
 
 CREDENTIALS_DIR = Path.home() / ".accounthub"
 CREDENTIALS_FILE = CREDENTIALS_DIR / "credentials.json"
@@ -27,7 +23,7 @@ def _ensure_credentials_dir() -> None:
             os.chmod(CREDENTIALS_DIR, 0o700)
 
 
-def save_credentials(access_token: str, refresh_token: str, api_url: Optional[str] = None) -> None:
+def save_credentials(access_token: str, refresh_token: str, api_url: str | None = None) -> None:
     """Save tokens to ~/.accounthub/credentials.json with secure permissions."""
     _ensure_credentials_dir()
 
@@ -35,7 +31,7 @@ def save_credentials(access_token: str, refresh_token: str, api_url: Optional[st
         "api_url": api_url or f"http://{settings.api_host}:{settings.api_port}",
         "access_token": access_token,
         "refresh_token": refresh_token,
-        "saved_at": datetime.now(timezone.utc).isoformat(),
+        "saved_at": datetime.now(timezone.utc).isoformat(),  # noqa: UP017
     }
 
     # Write with 0600 permissions
@@ -48,7 +44,7 @@ def save_credentials(access_token: str, refresh_token: str, api_url: Optional[st
         raise
 
 
-def load_credentials() -> Optional[dict]:
+def load_credentials() -> dict | None:
     """Load credentials from ~/.accounthub/credentials.json. Returns None if missing."""
     if not CREDENTIALS_FILE.exists():
         return None

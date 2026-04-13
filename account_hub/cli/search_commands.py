@@ -109,7 +109,7 @@ def export_results(
     console.print(f"[green]Exported to {output}[/green]")
 
 
-def _get_latest_session_id() -> str:
+def _get_latest_session_id() -> str | None:
     """Fetch the most recent scan session ID."""
     with get_client() as client:
         resp = client.get("/search/history", params={"limit": 1})

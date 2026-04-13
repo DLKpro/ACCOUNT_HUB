@@ -3,10 +3,7 @@
 Checks if an email has a Gravatar profile by querying the Gravatar API.
 No API key required. A profile existing confirms the email is registered.
 """
-from __future__ import annotations
-
 import hashlib
-from typing import List
 
 import httpx
 
@@ -22,7 +19,7 @@ class GravatarScanner(BaseScanner):
     def is_available(self) -> bool:
         return True  # No API key needed
 
-    async def scan(self, email: str) -> List[DiscoveredAccountResult]:
+    async def scan(self, email: str) -> list[DiscoveredAccountResult]:
         email_hash = hashlib.md5(email.strip().lower().encode()).hexdigest()
         url = f"https://gravatar.com/{email_hash}.json"
 
@@ -37,7 +34,7 @@ class GravatarScanner(BaseScanner):
         if resp.status_code != 200:
             return []
 
-        results: List[DiscoveredAccountResult] = [
+        results: list[DiscoveredAccountResult] = [
             DiscoveredAccountResult(
                 email_address=email,
                 service_name="Gravatar",

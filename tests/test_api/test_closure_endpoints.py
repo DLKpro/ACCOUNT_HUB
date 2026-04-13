@@ -26,7 +26,9 @@ def _auth(token: str) -> dict:
 
 async def _add_linked_email(test_engine, token: str, email: str, provider: str = "google"):
     from jose import jwt as jose_jwt
+
     from account_hub.config import settings
+
     payload = jose_jwt.decode(token, settings.secret_key, algorithms=["HS256"])
     user_id = uuid.UUID(payload["sub"])
     factory = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)

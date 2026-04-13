@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from typing import List, Optional
 
 import httpx
 from sqlalchemy import delete, select
@@ -17,7 +16,7 @@ class EmailServiceError(Exception):
     pass
 
 
-class EmailNotFound(EmailServiceError):
+class EmailNotFoundError(EmailServiceError):
     pass
 
 
@@ -30,7 +29,7 @@ class LinkedEmailInfo:
     linked_at: str
 
 
-async def list_linked_emails(db: AsyncSession, user_id: uuid.UUID) -> List[LinkedEmailInfo]:
+async def list_linked_emails(db: AsyncSession, user_id: uuid.UUID) -> list[LinkedEmailInfo]:
     """Return all linked emails for a user."""
     result = await db.execute(
         select(LinkedEmail)
@@ -62,7 +61,7 @@ async def get_linked_email(
     )
     email = result.scalar_one_or_none()
     if email is None:
-        raise EmailNotFound("Linked email not found")
+        raise EmailNotFoundError("Linked email not found")
     return email
 
 

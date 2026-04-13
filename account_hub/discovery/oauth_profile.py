@@ -3,10 +3,6 @@
 When you link an email via Google/Microsoft/Apple/Meta, we know for certain
 that the email has an account on that provider. This scanner surfaces that.
 """
-from __future__ import annotations
-
-from typing import List
-
 from account_hub.discovery.base import BaseScanner, DiscoveredAccountResult
 
 PROVIDER_DOMAINS = {
@@ -37,7 +33,7 @@ class OAuthProfileScanner(BaseScanner):
     def is_available(self) -> bool:
         return True  # Always available for linked emails
 
-    async def scan(self, email: str) -> List[DiscoveredAccountResult]:
+    async def scan(self, email: str) -> list[DiscoveredAccountResult]:
         return [
             DiscoveredAccountResult(
                 email_address=email,

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,12 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from account_hub.api.dependencies import get_current_user, get_db
 from account_hub.db.models import User
 from account_hub.services.oauth_service import (
-    DeviceCodePending,
-    EmailAlreadyLinked,
-    InvalidState,
+    DeviceCodePendingError,
+    EmailAlreadyLinkedError,
+    InvalidStateError,
     OAuthServiceError,
-    TokenExchangeFailed,
-    UserInfoFailed,
+    TokenExchangeFailedError,
+    UserInfoFailedError,
     handle_oauth_callback,
     initiate_oauth,
     poll_device_code,
@@ -28,16 +26,16 @@ router = APIRouter(prefix="/oauth", tags=["oauth"])
 
 class InitiateRequest(BaseModel):
     provider: str
-    redirect_port: Optional[int] = None
+    redirect_port: int | None = None
 
 
 class InitiateResponse(BaseModel):
-    auth_url: Optional[str] = None
-    state: Optional[str] = None
-    user_code: Optional[str] = None
-    verification_uri: Optional[str] = None
-    device_code: Optional[str] = None
-    interval: Optional[int] = None
+    auth_url: str | None = None
+    state: str | None = None
+    user_code: str | None = None
+    verification_uri: str | None = None
+    device_code: str | None = None
+    interval: int | None = None
 
 
 class CallbackRequest(BaseModel):
@@ -99,14 +97,14 @@ async def callback(
         result = await handle_oauth_callback(
             db, current_user.id, body.provider, body.code, body.state
         )
-    except InvalidState:
+    except InvalidStateError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid or expired OAuth state",
         )
-    except EmailAlreadyLinked as e:
+    except EmailAlreadyLinkedError as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
-    except (TokenExchangeFailed, UserInfoFailed) as e:
+    except (TokenExchangeFailedError, UserInfoFailedError) as e:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
 
     return LinkResponse(
@@ -126,11 +124,11 @@ async def poll(
         result = await poll_device_code(
             db, current_user.id, body.provider, body.device_code
         )
-    except DeviceCodePending:
+    except DeviceCodePendingError:
         return PollPendingResponse(status="pending")
-    except EmailAlreadyLinked as e:
+    except EmailAlreadyLinkedError as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
-    except (TokenExchangeFailed, UserInfoFailed) as e:
+    except (TokenExchangeFailedError, UserInfoFailedError) as e:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
 
     return LinkResponse(

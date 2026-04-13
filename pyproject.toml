@@ -7,7 +7,7 @@ name = "account-hub"
 version = "0.1.0"
 description = "CLI-based identity aggregation tool for linking email accounts and discovering associated services"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 license = "MIT"
 dependencies = [
     # CLI
@@ -52,7 +52,7 @@ dev = [
 accounthub = "account_hub.cli.main:app"
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py311"
 line-length = 100
 
 [tool.ruff.lint]
@@ -63,5 +63,5 @@ asyncio_mode = "auto"
 testpaths = ["tests"]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.11"
 strict = true

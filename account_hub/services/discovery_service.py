@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import uuid
 from datetime import datetime, timezone
-from typing import List
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,13 +18,13 @@ class DiscoveryServiceError(Exception):
     pass
 
 
-class ScanNotFound(DiscoveryServiceError):
+class ScanNotFoundError(DiscoveryServiceError):
     pass
 
 
-def _get_scanners(provider: str) -> List[BaseScanner]:
+def _get_scanners(provider: str) -> list[BaseScanner]:
     """Build the list of scanners for a given email provider."""
-    scanners: List[BaseScanner] = [
+    scanners: list[BaseScanner] = [
         OAuthProfileScanner(provider),
         GravatarScanner(),
         HIBPBreachScanner(),
@@ -39,7 +38,7 @@ async def start_scan(db: AsyncSession, user_id: uuid.UUID) -> ScanSession:
     result = await db.execute(
         select(LinkedEmail).where(
             LinkedEmail.user_id == user_id,
-            LinkedEmail.is_verified == True,
+            LinkedEmail.is_verified.is_(True),
         )
     )
     emails = result.scalars().all()
@@ -49,7 +48,7 @@ async def start_scan(db: AsyncSession, user_id: uuid.UUID) -> ScanSession:
         user_id=user_id,
         status="running",
         emails_scanned=len(emails),
-        started_at=datetime.now(timezone.utc),
+        started_at=datetime.now(timezone.utc),  # noqa: UP017
     )
     db.add(session)
     await db.commit()
@@ -57,12 +56,12 @@ async def start_scan(db: AsyncSession, user_id: uuid.UUID) -> ScanSession:
 
     if not emails:
         session.status = "completed"
-        session.completed_at = datetime.now(timezone.utc)
+        session.completed_at = datetime.now(timezone.utc)  # noqa: UP017
         await db.commit()
         return session
 
     # Run scanners
-    all_results: List[DiscoveredAccountResult] = []
+    all_results: list[DiscoveredAccountResult] = []
     for email in emails:
         scanners = _get_scanners(email.provider)
         tasks = [scanner.scan(email.email_address) for scanner in scanners]
@@ -94,7 +93,7 @@ async def start_scan(db: AsyncSession, user_id: uuid.UUID) -> ScanSession:
 
     session.status = "completed"
     session.accounts_found = len(seen)
-    session.completed_at = datetime.now(timezone.utc)
+    session.completed_at = datetime.now(timezone.utc)  # noqa: UP017
     await db.commit()
     await db.refresh(session)
 
@@ -113,13 +112,13 @@ async def get_scan_session(
     )
     session = result.scalar_one_or_none()
     if session is None:
-        raise ScanNotFound("Scan session not found")
+        raise ScanNotFoundError("Scan session not found")
     return session
 
 
 async def get_scan_results(
     db: AsyncSession, session_id: uuid.UUID
-) -> List[DiscoveredAccount]:
+) -> list[DiscoveredAccount]:
     """Get all discovered accounts for a scan session."""
     result = await db.execute(
         select(DiscoveredAccount)
@@ -131,7 +130,7 @@ async def get_scan_results(
 
 async def get_scan_history(
     db: AsyncSession, user_id: uuid.UUID, limit: int = 10, offset: int = 0
-) -> List[ScanSession]:
+) -> list[ScanSession]:
     """Get past scan sessions for a user, newest first."""
     result = await db.execute(
         select(ScanSession)

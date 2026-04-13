@@ -4,11 +4,10 @@ External HTTP calls (token exchange, userinfo) are not tested here since they
 require real provider credentials. Integration tests mock those calls.
 """
 import pytest
-import pytest_asyncio
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from account_hub.db.models import LinkedEmail, OAuthState, User
+from account_hub.db.models import OAuthState, User
 from account_hub.oauth.providers import (
     FlowType,
     OAuthProviderConfig,
@@ -17,7 +16,7 @@ from account_hub.oauth.providers import (
 )
 from account_hub.security.hashing import hash_password
 from account_hub.services.oauth_service import (
-    InvalidState,
+    InvalidStateError,
     handle_oauth_callback,
     initiate_oauth,
 )
@@ -93,7 +92,7 @@ async def test_initiate_unknown_provider_raises(db_session: AsyncSession):
 @pytest.mark.asyncio
 async def test_callback_invalid_state_raises(db_session: AsyncSession):
     user = await _create_test_user(db_session)
-    with pytest.raises(InvalidState):
+    with pytest.raises(InvalidStateError):
         await handle_oauth_callback(
             db_session, user.id, "testprov", code="fake", state="bad-state"
         )

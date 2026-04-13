@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import List, Optional
 
 from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
@@ -19,7 +18,7 @@ class User(Base):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     username: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
-    email: Mapped[Optional[str]] = mapped_column(String(320), unique=True, nullable=True)
+    email: Mapped[str | None] = mapped_column(String(320), unique=True, nullable=True)
     password_hash: Mapped[str] = mapped_column(String(128), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(
@@ -29,16 +28,16 @@ class User(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    linked_emails: Mapped[List[LinkedEmail]] = relationship(
+    linked_emails: Mapped[list[LinkedEmail]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
-    oauth_states: Mapped[List[OAuthState]] = relationship(
+    oauth_states: Mapped[list[OAuthState]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
-    scan_sessions: Mapped[List[ScanSession]] = relationship(
+    scan_sessions: Mapped[list[ScanSession]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
-    closure_requests: Mapped[List[ClosureRequest]] = relationship(
+    closure_requests: Mapped[list[ClosureRequest]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
 
@@ -55,13 +54,13 @@ class LinkedEmail(Base):
     )
     email_address: Mapped[str] = mapped_column(String(320), nullable=False)
     provider: Mapped[str] = mapped_column(String(20), nullable=False)
-    provider_user_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    access_token_enc: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    refresh_token_enc: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    token_expires_at: Mapped[Optional[datetime]] = mapped_column(
+    provider_user_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    access_token_enc: Mapped[str | None] = mapped_column(Text, nullable=True)
+    refresh_token_enc: Mapped[str | None] = mapped_column(Text, nullable=True)
+    token_expires_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
-    scopes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    scopes: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     linked_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
@@ -84,7 +83,7 @@ class OAuthState(Base):
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
     provider: Mapped[str] = mapped_column(String(20), nullable=False)
-    redirect_port: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    redirect_port: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -105,19 +104,19 @@ class ScanSession(Base):
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
     emails_scanned: Mapped[int] = mapped_column(Integer, default=0)
     accounts_found: Mapped[int] = mapped_column(Integer, default=0)
-    started_at: Mapped[Optional[datetime]] = mapped_column(
+    started_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
-    completed_at: Mapped[Optional[datetime]] = mapped_column(
+    completed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
-    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
 
     user: Mapped[User] = relationship(back_populates="scan_sessions")
-    discovered_accounts: Mapped[List[DiscoveredAccount]] = relationship(
+    discovered_accounts: Mapped[list[DiscoveredAccount]] = relationship(
         back_populates="scan_session", cascade="all, delete-orphan"
     )
 
@@ -137,16 +136,16 @@ class DiscoveredAccount(Base):
     scan_session_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("scan_sessions.id", ondelete="CASCADE"), nullable=False
     )
-    linked_email_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    linked_email_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("linked_emails.id", ondelete="SET NULL"), nullable=True
     )
     email_address: Mapped[str] = mapped_column(String(320), nullable=False)
     service_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    service_domain: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    service_domain: Mapped[str | None] = mapped_column(String(255), nullable=True)
     source: Mapped[str] = mapped_column(String(50), nullable=False)
-    source_detail: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    source_detail: Mapped[str | None] = mapped_column(Text, nullable=True)
     confidence: Mapped[str] = mapped_column(String(10), default="confirmed")
-    breach_date: Mapped[Optional[datetime]] = mapped_column(Date, nullable=True)
+    breach_date: Mapped[datetime | None] = mapped_column(Date, nullable=True)
     discovered_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -163,7 +162,7 @@ class ClosureRequest(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
-    discovered_account_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    discovered_account_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("discovered_accounts.id", ondelete="SET NULL"),
         nullable=True,
@@ -171,13 +170,13 @@ class ClosureRequest(Base):
     service_name: Mapped[str] = mapped_column(String(255), nullable=False)
     method: Mapped[str] = mapped_column(String(20), nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
-    deletion_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    deletion_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     requested_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
-    completed_at: Mapped[Optional[datetime]] = mapped_column(
+    completed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
-    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     user: Mapped[User] = relationship(back_populates="closure_requests")

@@ -2,14 +2,13 @@
 import uuid
 
 import pytest
-import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from account_hub.db.models import LinkedEmail, User
 from account_hub.security.encryption import encrypt_token
 from account_hub.security.hashing import hash_password
 from account_hub.services.email_service import (
-    EmailNotFound,
+    EmailNotFoundError,
     get_linked_email,
     list_linked_emails,
     unlink_email,
@@ -83,7 +82,7 @@ async def test_get_linked_email(db_session: AsyncSession):
 @pytest.mark.asyncio
 async def test_get_linked_email_not_found(db_session: AsyncSession):
     user = await _create_user(db_session)
-    with pytest.raises(EmailNotFound):
+    with pytest.raises(EmailNotFoundError):
         await get_linked_email(db_session, user.id, uuid.uuid4())
 
 
@@ -93,7 +92,7 @@ async def test_get_linked_email_wrong_user(db_session: AsyncSession):
     user2 = await _create_user(db_session, "other")
     linked = await _link_email(db_session, user1)
 
-    with pytest.raises(EmailNotFound):
+    with pytest.raises(EmailNotFoundError):
         await get_linked_email(db_session, user2.id, linked.id)
 
 
@@ -111,5 +110,5 @@ async def test_unlink_email(db_session: AsyncSession):
 @pytest.mark.asyncio
 async def test_unlink_email_not_found(db_session: AsyncSession):
     user = await _create_user(db_session)
-    with pytest.raises(EmailNotFound):
+    with pytest.raises(EmailNotFoundError):
         await unlink_email(db_session, user.id, uuid.uuid4())

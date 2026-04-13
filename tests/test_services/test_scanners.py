@@ -4,7 +4,6 @@ import pytest
 from account_hub.discovery.base import BaseScanner, DiscoveredAccountResult
 from account_hub.discovery.oauth_profile import OAuthProfileScanner
 
-
 # --- OAuthProfileScanner ---
 
 

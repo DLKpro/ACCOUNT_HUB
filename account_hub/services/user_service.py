@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-import uuid
 from dataclasses import dataclass
 
 from sqlalchemy import select
@@ -22,19 +21,19 @@ class UserServiceError(Exception):
     pass
 
 
-class UsernameInvalid(UserServiceError):
+class UsernameInvalidError(UserServiceError):
     pass
 
 
-class UsernameTaken(UserServiceError):
+class UsernameTakenError(UserServiceError):
     pass
 
 
-class InvalidCredentials(UserServiceError):
+class InvalidCredentialsError(UserServiceError):
     pass
 
 
-class InvalidToken(UserServiceError):
+class InvalidTokenError(UserServiceError):
     pass
 
 
@@ -51,13 +50,13 @@ async def register_user(
     username = username.lower().strip()
 
     if not USERNAME_PATTERN.match(username):
-        raise UsernameInvalid(
+        raise UsernameInvalidError(
             "Username must be 3-64 characters, lowercase letters, numbers, and underscores only"
         )
 
     existing = await db.execute(select(User).where(User.username == username))
     if existing.scalar_one_or_none() is not None:
-        raise UsernameTaken(f"Username '{username}' is already taken")
+        raise UsernameTakenError(f"Username '{username}' is already taken")
 
     user = User(
         username=username,
@@ -84,10 +83,10 @@ async def authenticate_user(
     user = result.scalar_one_or_none()
 
     if user is None or not verify_password(password, user.password_hash):
-        raise InvalidCredentials("Invalid username or password")
+        raise InvalidCredentialsError("Invalid username or password")
 
     if not user.is_active:
-        raise InvalidCredentials("Account is deactivated")
+        raise InvalidCredentialsError("Account is deactivated")
 
     tokens = TokenPair(
         access_token=create_access_token(user.id),
@@ -103,12 +102,14 @@ async def refresh_tokens(db: AsyncSession, refresh_token_str: str) -> TokenPair:
     try:
         user_id = decode_token(refresh_token_str, expected_type="refresh")
     except JWTError:
-        raise InvalidToken("Invalid or expired refresh token")
+        raise InvalidTokenError("Invalid or expired refresh token")
 
-    result = await db.execute(select(User).where(User.id == user_id, User.is_active == True))
+    result = await db.execute(
+        select(User).where(User.id == user_id, User.is_active.is_(True))
+    )
     user = result.scalar_one_or_none()
     if user is None:
-        raise InvalidToken("User not found or inactive")
+        raise InvalidTokenError("User not found or inactive")
 
     return TokenPair(
         access_token=create_access_token(user.id),
@@ -119,7 +120,7 @@ async def refresh_tokens(db: AsyncSession, refresh_token_str: str) -> TokenPair:
 async def delete_account(db: AsyncSession, user: User, password: str) -> None:
     """Delete a user account after password confirmation. Cascades to all related data."""
     if not verify_password(password, user.password_hash):
-        raise InvalidCredentials("Incorrect password")
+        raise InvalidCredentialsError("Incorrect password")
 
     await db.delete(user)
     await db.commit()

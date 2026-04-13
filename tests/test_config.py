@@ -1,5 +1,3 @@
-import os
-
 from account_hub.config import Settings
 
 

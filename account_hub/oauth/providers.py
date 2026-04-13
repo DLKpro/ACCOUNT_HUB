@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Literal, Optional
 
 
-class FlowType(str, Enum):
+class FlowType(str, Enum):  # noqa: UP042
     LOOPBACK = "loopback"
     DEVICE_CODE = "device_code"
 
@@ -16,18 +15,18 @@ class OAuthProviderConfig:
     authorize_url: str
     token_url: str
     userinfo_url: str
-    scopes: List[str]
+    scopes: list[str]
     flow_type: FlowType
     client_id: str
     client_secret: str
-    extra_authorize_params: Dict[str, str] = field(default_factory=dict)
-    extra_token_params: Dict[str, str] = field(default_factory=dict)
-    revoke_url: Optional[str] = None
+    extra_authorize_params: dict[str, str] = field(default_factory=dict)
+    extra_token_params: dict[str, str] = field(default_factory=dict)
+    revoke_url: str | None = None
     # Microsoft device code flow
-    device_code_url: Optional[str] = None
+    device_code_url: str | None = None
 
 
-_registry: Dict[str, OAuthProviderConfig] = {}
+_registry: dict[str, OAuthProviderConfig] = {}
 
 
 def register_provider(config: OAuthProviderConfig) -> None:
@@ -40,7 +39,7 @@ def get_provider(name: str) -> OAuthProviderConfig:
     return _registry[name]
 
 
-def list_providers() -> List[str]:
+def list_providers() -> list[str]:
     return list(_registry.keys())
 
 

@@ -2,18 +2,17 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List, Optional
 
 
 @dataclass
 class DiscoveredAccountResult:
     email_address: str
     service_name: str
-    service_domain: Optional[str] = None
+    service_domain: str | None = None
     source: str = ""
-    source_detail: Optional[str] = None
+    source_detail: str | None = None
     confidence: str = "confirmed"
-    breach_date: Optional[str] = None  # ISO date string
+    breach_date: str | None = None  # ISO date string
 
 
 class BaseScanner(ABC):
@@ -31,6 +30,6 @@ class BaseScanner(ABC):
         ...
 
     @abstractmethod
-    async def scan(self, email: str) -> List[DiscoveredAccountResult]:
+    async def scan(self, email: str) -> list[DiscoveredAccountResult]:
         """Scan for accounts associated with the given email address."""
         ...

@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import csv
 import io
-from typing import List
 
 from account_hub.db.models import DiscoveredAccount
 
 
-def export_to_csv(accounts: List[DiscoveredAccount]) -> str:
+def export_to_csv(accounts: list[DiscoveredAccount]) -> str:
     """Generate CSV string from discovered accounts."""
     output = io.StringIO()
     writer = csv.writer(output)

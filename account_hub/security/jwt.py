@@ -9,23 +9,27 @@ ALGORITHM = "HS256"
 
 
 def create_access_token(user_id: uuid.UUID) -> str:
-    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.access_token_expire_minutes)
+    expire = datetime.now(timezone.utc) + timedelta(  # noqa: UP017
+        minutes=settings.access_token_expire_minutes
+    )
     payload = {
         "sub": str(user_id),
         "type": "access",
         "exp": expire,
-        "iat": datetime.now(timezone.utc),
+        "iat": datetime.now(timezone.utc),  # noqa: UP017
     }
     return jwt.encode(payload, settings.secret_key, algorithm=ALGORITHM)
 
 
 def create_refresh_token(user_id: uuid.UUID) -> str:
-    expire = datetime.now(timezone.utc) + timedelta(days=settings.refresh_token_expire_days)
+    expire = datetime.now(timezone.utc) + timedelta(  # noqa: UP017
+        days=settings.refresh_token_expire_days
+    )
     payload = {
         "sub": str(user_id),
         "type": "refresh",
         "exp": expire,
-        "iat": datetime.now(timezone.utc),
+        "iat": datetime.now(timezone.utc),  # noqa: UP017
     }
     return jwt.encode(payload, settings.secret_key, algorithm=ALGORITHM)
 

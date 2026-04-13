@@ -4,12 +4,17 @@ import uuid
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from account_hub.db.models import DiscoveredAccount, LinkedEmail, ScanSession, User
+from account_hub.db.models import (
+    DiscoveredAccount,
+    LinkedEmail,
+    ScanSession,
+    User,
+)
 from account_hub.security.encryption import encrypt_token
 from account_hub.security.hashing import hash_password
 from account_hub.services.closure_service import (
-    AccountNotFound,
-    RequestNotFound,
+    AccountNotFoundError,
+    RequestNotFoundError,
     complete_closure,
     get_closure_info,
     get_closure_request,
@@ -17,7 +22,6 @@ from account_hub.services.closure_service import (
     list_registry_services,
     request_closure,
 )
-
 
 # --- Registry lookup tests (no DB needed) ---
 
@@ -104,7 +108,7 @@ async def test_request_closure_creates_request(db_session: AsyncSession):
 @pytest.mark.asyncio
 async def test_request_closure_unknown_account(db_session: AsyncSession):
     user, _ = await _setup_user_with_scan(db_session)
-    with pytest.raises(AccountNotFound):
+    with pytest.raises(AccountNotFoundError):
         await request_closure(db_session, user.id, uuid.uuid4())
 
 
@@ -116,7 +120,7 @@ async def test_request_closure_wrong_user(db_session: AsyncSession):
     await db_session.commit()
     await db_session.refresh(other_user)
 
-    with pytest.raises(AccountNotFound):
+    with pytest.raises(AccountNotFoundError):
         await request_closure(db_session, other_user.id, account.id)
 
 
@@ -134,7 +138,7 @@ async def test_complete_closure(db_session: AsyncSession):
 @pytest.mark.asyncio
 async def test_complete_closure_not_found(db_session: AsyncSession):
     user, _ = await _setup_user_with_scan(db_session)
-    with pytest.raises(RequestNotFound):
+    with pytest.raises(RequestNotFoundError):
         await complete_closure(db_session, user.id, uuid.uuid4())
 
 

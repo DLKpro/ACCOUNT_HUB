@@ -1,7 +1,6 @@
 """Unit tests for export_service — CSV generation."""
 import csv
 import io
-import uuid
 from datetime import datetime, timezone
 from unittest.mock import MagicMock
 
@@ -17,7 +16,7 @@ def _mock_account(**kwargs):
         "source": "oauth_profile",
         "confidence": "confirmed",
         "breach_date": None,
-        "discovered_at": datetime(2026, 4, 12, 10, 0, 0, tzinfo=timezone.utc),
+        "discovered_at": datetime(2026, 4, 12, 10, 0, 0, tzinfo=timezone.utc),  # noqa: UP017
     }
     defaults.update(kwargs)
     mock = MagicMock()

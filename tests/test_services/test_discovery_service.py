@@ -1,4 +1,6 @@
 """Unit tests for discovery_service — scan orchestration against test DB."""
+import uuid
+
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -6,14 +8,12 @@ from account_hub.db.models import LinkedEmail, User
 from account_hub.security.encryption import encrypt_token
 from account_hub.security.hashing import hash_password
 from account_hub.services.discovery_service import (
-    ScanNotFound,
+    ScanNotFoundError,
     get_scan_history,
     get_scan_results,
     get_scan_session,
     start_scan,
 )
-
-import uuid
 
 
 async def _create_user(db: AsyncSession, username: str = "scanuser") -> User:
@@ -101,7 +101,7 @@ async def test_get_scan_session(db_session: AsyncSession):
 @pytest.mark.asyncio
 async def test_get_scan_session_not_found(db_session: AsyncSession):
     user = await _create_user(db_session)
-    with pytest.raises(ScanNotFound):
+    with pytest.raises(ScanNotFoundError):
         await get_scan_session(db_session, user.id, uuid.uuid4())
 
 
@@ -111,7 +111,7 @@ async def test_get_scan_session_wrong_user(db_session: AsyncSession):
     user2 = await _create_user(db_session, "scanother")
     session = await start_scan(db_session, user1.id)
 
-    with pytest.raises(ScanNotFound):
+    with pytest.raises(ScanNotFoundError):
         await get_scan_session(db_session, user2.id, session.id)
 
 

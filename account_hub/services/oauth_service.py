@@ -4,7 +4,6 @@ import secrets
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Optional
 from urllib.parse import urlencode
 
 import httpx
@@ -20,23 +19,23 @@ class OAuthServiceError(Exception):
     pass
 
 
-class InvalidState(OAuthServiceError):
+class InvalidStateError(OAuthServiceError):
     pass
 
 
-class TokenExchangeFailed(OAuthServiceError):
+class TokenExchangeFailedError(OAuthServiceError):
     pass
 
 
-class UserInfoFailed(OAuthServiceError):
+class UserInfoFailedError(OAuthServiceError):
     pass
 
 
-class EmailAlreadyLinked(OAuthServiceError):
+class EmailAlreadyLinkedError(OAuthServiceError):
     pass
 
 
-class DeviceCodePending(OAuthServiceError):
+class DeviceCodePendingError(OAuthServiceError):
     """Raised when the device code flow is still waiting for user action."""
     pass
 
@@ -44,13 +43,13 @@ class DeviceCodePending(OAuthServiceError):
 @dataclass
 class InitiateResult:
     """Returned by initiate_oauth — either an auth_url or device code info."""
-    auth_url: Optional[str] = None
-    state: Optional[str] = None
+    auth_url: str | None = None
+    state: str | None = None
     # Device code flow fields
-    user_code: Optional[str] = None
-    verification_uri: Optional[str] = None
-    device_code: Optional[str] = None
-    interval: Optional[int] = None
+    user_code: str | None = None
+    verification_uri: str | None = None
+    device_code: str | None = None
+    interval: int | None = None
 
 
 @dataclass
@@ -64,7 +63,7 @@ async def initiate_oauth(
     db: AsyncSession,
     user_id: uuid.UUID,
     provider_name: str,
-    redirect_port: Optional[int] = None,
+    redirect_port: int | None = None,
 ) -> InitiateResult:
     """Start an OAuth flow. Returns auth URL (loopback) or device code info."""
     provider = get_provider(provider_name)
@@ -76,7 +75,7 @@ async def initiate_oauth(
         user_id=user_id,
         provider=provider_name,
         redirect_port=redirect_port,
-        expires_at=datetime.now(timezone.utc) + timedelta(minutes=10),
+        expires_at=datetime.now(timezone.utc) + timedelta(minutes=10),  # noqa: UP017
     )
     db.add(oauth_state)
     await db.commit()
@@ -117,7 +116,9 @@ async def _start_device_code_flow(
         )
 
     if resp.status_code != 200:
-        raise TokenExchangeFailed(f"Device code request failed: {resp.status_code} {resp.text}")
+        raise TokenExchangeFailedError(
+            f"Device code request failed: {resp.status_code} {resp.text}"
+        )
 
     data = resp.json()
     return InitiateResult(
@@ -143,12 +144,12 @@ async def handle_oauth_callback(
             OAuthState.state == state,
             OAuthState.provider == provider_name,
             OAuthState.user_id == user_id,
-            OAuthState.expires_at > datetime.now(timezone.utc),
+            OAuthState.expires_at > datetime.now(timezone.utc),  # noqa: UP017
         )
     )
     oauth_state = result.scalar_one_or_none()
     if oauth_state is None:
-        raise InvalidState("Invalid or expired OAuth state")
+        raise InvalidStateError("Invalid or expired OAuth state")
 
     redirect_port = oauth_state.redirect_port
 
@@ -166,7 +167,7 @@ async def handle_oauth_callback(
 
     email_address = user_info.get("email")
     if not email_address:
-        raise UserInfoFailed("Provider did not return an email address")
+        raise UserInfoFailedError("Provider did not return an email address")
 
     provider_user_id = user_info.get("sub") or user_info.get("id")
 
@@ -178,14 +179,16 @@ async def handle_oauth_callback(
         )
     )
     if existing.scalar_one_or_none() is not None:
-        raise EmailAlreadyLinked(f"{email_address} is already linked to your account")
+        raise EmailAlreadyLinkedError(f"{email_address} is already linked to your account")
 
     # Encrypt and store tokens
     refresh_token = token_data.get("refresh_token")
     expires_in = token_data.get("expires_in")
     token_expires_at = None
     if expires_in:
-        token_expires_at = datetime.now(timezone.utc) + timedelta(seconds=int(expires_in))
+        token_expires_at = datetime.now(timezone.utc) + timedelta(  # noqa: UP017
+            seconds=int(expires_in)
+        )
 
     linked_email = LinkedEmail(
         user_id=user_id,
@@ -232,19 +235,23 @@ async def poll_device_code(
         data = resp.json()
         error = data.get("error", "")
         if error == "authorization_pending":
-            raise DeviceCodePending("User has not yet authorized")
+            raise DeviceCodePendingError("User has not yet authorized")
         if error == "slow_down":
-            raise DeviceCodePending("Slow down — increase polling interval")
-        raise TokenExchangeFailed(f"Device code poll failed: {resp.status_code} {resp.text}")
+            raise DeviceCodePendingError("Slow down — increase polling interval")
+        raise TokenExchangeFailedError(f"Device code poll failed: {resp.status_code} {resp.text}")
 
     token_data = resp.json()
     access_token = token_data["access_token"]
 
     # Get user info
     user_info = await _get_user_info(provider, access_token)
-    email_address = user_info.get("mail") or user_info.get("userPrincipalName") or user_info.get("email")
+    email_address = (
+        user_info.get("mail")
+        or user_info.get("userPrincipalName")
+        or user_info.get("email")
+    )
     if not email_address:
-        raise UserInfoFailed("Provider did not return an email address")
+        raise UserInfoFailedError("Provider did not return an email address")
 
     provider_user_id = user_info.get("id")
 
@@ -256,13 +263,15 @@ async def poll_device_code(
         )
     )
     if existing.scalar_one_or_none() is not None:
-        raise EmailAlreadyLinked(f"{email_address} is already linked to your account")
+        raise EmailAlreadyLinkedError(f"{email_address} is already linked to your account")
 
     refresh_token = token_data.get("refresh_token")
     expires_in = token_data.get("expires_in")
     token_expires_at = None
     if expires_in:
-        token_expires_at = datetime.now(timezone.utc) + timedelta(seconds=int(expires_in))
+        token_expires_at = datetime.now(timezone.utc) + timedelta(  # noqa: UP017
+            seconds=int(expires_in)
+        )
 
     linked_email = LinkedEmail(
         user_id=user_id,
@@ -296,7 +305,7 @@ async def poll_device_code(
 
 
 async def _exchange_code(
-    provider: OAuthProviderConfig, code: str, redirect_port: Optional[int]
+    provider: OAuthProviderConfig, code: str, redirect_port: int | None
 ) -> dict:
     """Exchange an authorization code for tokens."""
     redirect_uri = f"http://127.0.0.1:{redirect_port}/callback" if redirect_port else ""
@@ -315,7 +324,7 @@ async def _exchange_code(
         )
 
     if resp.status_code != 200:
-        raise TokenExchangeFailed(f"Token exchange failed: {resp.status_code} {resp.text}")
+        raise TokenExchangeFailedError(f"Token exchange failed: {resp.status_code} {resp.text}")
 
     return resp.json()
 
@@ -332,6 +341,6 @@ async def _get_user_info(provider: OAuthProviderConfig, access_token: str) -> di
         )
 
     if resp.status_code != 200:
-        raise UserInfoFailed(f"Userinfo request failed: {resp.status_code} {resp.text}")
+        raise UserInfoFailedError(f"Userinfo request failed: {resp.status_code} {resp.text}")
 
     return resp.json()

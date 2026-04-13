@@ -1,7 +1,4 @@
 """Tests for database model definitions (schema validation, not DB queries)."""
-import uuid
-from datetime import datetime, timezone
-
 from account_hub.db.base import Base
 from account_hub.db.models import LinkedEmail, OAuthState, User
 

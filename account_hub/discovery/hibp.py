@@ -3,11 +3,8 @@
 Requires a paid HIBP API key ($3.50/mo). When the key is not configured,
 is_available() returns False and the scanner is skipped.
 """
-from __future__ import annotations
-
 import asyncio
 import json
-from typing import List
 
 import httpx
 
@@ -29,7 +26,7 @@ class HIBPBreachScanner(BaseScanner):
     def is_available(self) -> bool:
         return bool(settings.hibp_api_key)
 
-    async def scan(self, email: str) -> List[DiscoveredAccountResult]:
+    async def scan(self, email: str) -> list[DiscoveredAccountResult]:
         if not self.is_available():
             return []
 
@@ -54,7 +51,7 @@ class HIBPBreachScanner(BaseScanner):
         if resp.status_code != 200:
             return []  # Fail silently — don't break the scan
 
-        results: List[DiscoveredAccountResult] = []
+        results: list[DiscoveredAccountResult] = []
         for breach in resp.json():
             results.append(
                 DiscoveredAccountResult(

@@ -30,6 +30,7 @@ async def _add_linked_email(
 ):
     """Directly insert a linked email into the DB (bypasses OAuth flow)."""
     from jose import jwt as jose_jwt
+
     from account_hub.config import settings
 
     payload = jose_jwt.decode(token, settings.secret_key, algorithms=["HS256"])

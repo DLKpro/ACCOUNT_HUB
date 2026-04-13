@@ -5,7 +5,6 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,25 +12,25 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from account_hub.db.models import ClosureRequest, DiscoveredAccount
 
 _REGISTRY_PATH = Path(__file__).parent.parent / "data" / "deletion_registry.json"
-_registry_cache: Optional[Dict[str, dict]] = None
+_registry_cache: dict[str, dict] | None = None
 
 
 class ClosureServiceError(Exception):
     pass
 
 
-class AccountNotFound(ClosureServiceError):
+class AccountNotFoundError(ClosureServiceError):
     pass
 
 
-class RequestNotFound(ClosureServiceError):
+class RequestNotFoundError(ClosureServiceError):
     pass
 
 
 @dataclass
 class ClosureInfo:
     service_name: str
-    deletion_url: Optional[str]
+    deletion_url: str | None
     difficulty: str
     method: str
     notes: str
@@ -43,13 +42,13 @@ class ClosureRequestInfo:
     service_name: str
     method: str
     status: str
-    deletion_url: Optional[str]
+    deletion_url: str | None
     requested_at: str
-    completed_at: Optional[str]
-    notes: Optional[str]
+    completed_at: str | None
+    notes: str | None
 
 
-def _load_registry() -> Dict[str, dict]:
+def _load_registry() -> dict[str, dict]:
     global _registry_cache
     if _registry_cache is None:
         if _REGISTRY_PATH.exists():
@@ -89,7 +88,7 @@ def get_closure_info(service_name: str) -> ClosureInfo:
     )
 
 
-def list_registry_services() -> List[str]:
+def list_registry_services() -> list[str]:
     """Return all service names in the deletion registry."""
     return list(_load_registry().keys())
 
@@ -111,7 +110,7 @@ async def request_closure(
     )
     account = result.scalar_one_or_none()
     if account is None:
-        raise AccountNotFound("Discovered account not found")
+        raise AccountNotFoundError("Discovered account not found")
 
     info = get_closure_info(account.service_name)
 
@@ -136,7 +135,7 @@ async def complete_closure(
     """Mark a closure request as completed."""
     closure = await _get_request(db, user_id, request_id)
     closure.status = "completed"
-    closure.completed_at = datetime.now(timezone.utc)
+    closure.completed_at = datetime.now(timezone.utc)  # noqa: UP017
     await db.commit()
     await db.refresh(closure)
     return closure
@@ -144,7 +143,7 @@ async def complete_closure(
 
 async def list_closure_requests(
     db: AsyncSession, user_id: uuid.UUID
-) -> List[ClosureRequestInfo]:
+) -> list[ClosureRequestInfo]:
     """List all closure requests for a user."""
     result = await db.execute(
         select(ClosureRequest)
@@ -195,5 +194,5 @@ async def _get_request(
     )
     closure = result.scalar_one_or_none()
     if closure is None:
-        raise RequestNotFound("Closure request not found")
+        raise RequestNotFoundError("Closure request not found")
     return closure

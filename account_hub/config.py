@@ -23,6 +23,15 @@ class Settings(BaseSettings):
     refresh_token_expire_days: int = 7
 
     @model_validator(mode="after")
+    def _fix_database_url(self) -> "Settings":
+        """Ensure the database URL uses the asyncpg driver."""
+        if self.database_url.startswith("postgresql://"):
+            self.database_url = self.database_url.replace(
+                "postgresql://", "postgresql+asyncpg://", 1
+            )
+        return self
+
+    @model_validator(mode="after")
     def _validate_secret_key(self) -> "Settings":
         """Refuse to start with the default secret key in non-test environments."""
         if self.secret_key == "change-me" and os.environ.get("TESTING") != "1":

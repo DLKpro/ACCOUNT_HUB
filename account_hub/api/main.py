@@ -27,9 +27,12 @@ async def lifespan(app: FastAPI):
 
     # Auto-create tables if they don't exist
     from account_hub.db import models  # noqa: F401
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    logger.info("Database tables ensured")
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Database tables ensured")
+    except Exception:
+        logger.exception("Failed to connect to database — app will start but DB operations will fail")
 
     # Register OAuth providers on startup
     from account_hub.oauth.apple import setup_apple

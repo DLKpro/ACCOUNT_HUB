@@ -25,10 +25,13 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def _fix_database_url(self) -> "Settings":
         """Ensure the database URL uses the asyncpg driver."""
-        if self.database_url.startswith("postgresql://"):
-            self.database_url = self.database_url.replace(
-                "postgresql://", "postgresql+asyncpg://", 1
-            )
+        url = self.database_url.strip()
+        # Handle postgres:// (used by some providers like Railway/Heroku)
+        if url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+        elif url.startswith("postgresql://"):
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        self.database_url = url
         return self
 
     @model_validator(mode="after")

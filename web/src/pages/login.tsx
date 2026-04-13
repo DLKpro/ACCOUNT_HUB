@@ -10,9 +10,16 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [ready, setReady] = useState(false);
+  const [phase, setPhase] = useState<"splash" | "transition" | "ready">("splash");
   const login = useAuthStore((s) => s.login);
   const navigate = useNavigate();
+
+  const handleLogoComplete = () => {
+    // Brief pause after logo finishes, then start the transition
+    setTimeout(() => setPhase("transition"), 300);
+    // After the shrink/slide finishes, show the form
+    setTimeout(() => setPhase("ready"), 1100);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,21 +40,34 @@ export default function LoginPage() {
     }
   };
 
+  const isSplash = phase === "splash";
+  const isTransitioning = phase === "transition";
+  const isReady = phase === "ready";
+
   return (
     <div className={styles.page}>
-      <div className={styles.container}>
-        <div className={styles.header}>
-          <BrandLogoAnimated size={64} onComplete={() => setReady(true)} />
-          <h1 className={`${styles.wordmark} ${styles.fadeUp}`}>
+      <div className={`${styles.container} ${isReady ? styles.containerReady : ""}`}>
+
+        {/* Logo wrapper — starts centered and large, shrinks into header position */}
+        <div className={`${styles.logoStage} ${isTransitioning || isReady ? styles.logoStageSettled : ""}`}>
+          <div className={`${styles.logoScale} ${isTransitioning || isReady ? styles.logoScaleSettled : ""}`}>
+            <BrandLogoAnimated size={120} onComplete={handleLogoComplete} />
+          </div>
+        </div>
+
+        {/* Wordmark + subtitle — hidden during splash, fade in during transition */}
+        <div className={`${styles.header} ${isTransitioning || isReady ? styles.headerVisible : ""}`}>
+          <h1 className={styles.wordmark}>
             <span className={styles.wordmarkLight}>account</span>
             <span className={styles.wordmarkBold}>hub</span>
           </h1>
-          <p className={`${styles.subtitle} ${styles.fadeUp} ${styles.fadeDelay2}`}>Sign in to your account</p>
+          <p className={styles.subtitle}>Sign in to your account</p>
         </div>
 
-        {ready && (
+        {/* Form — only rendered after transition completes */}
+        {isReady && (
           <>
-            <form onSubmit={handleSubmit} className={`${styles.form} ${styles.fadeUp} ${styles.fadeImmediate}`}>
+            <form onSubmit={handleSubmit} className={`${styles.form} ${styles.fadeUp}`}>
               {error && <div className={styles.error}>{error}</div>}
 
               <div className={styles.field}>
@@ -84,7 +104,7 @@ export default function LoginPage() {
               </button>
             </form>
 
-            <p className={`${styles.switchLink} ${styles.fadeUp} ${styles.fadeImmediate2}`}>
+            <p className={`${styles.switchLink} ${styles.fadeUp} ${styles.fadeDelay2}`}>
               Don't have an account?{" "}
               <Link to="/register" className={styles.link}>Create one</Link>
             </p>

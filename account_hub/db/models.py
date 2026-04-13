@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from typing import List, Optional
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -33,6 +33,9 @@ class User(Base):
         back_populates="user", cascade="all, delete-orphan"
     )
     oauth_states: Mapped[List[OAuthState]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+    scan_sessions: Mapped[List[ScanSession]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
 
@@ -85,3 +88,64 @@ class OAuthState(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     user: Mapped[User] = relationship(back_populates="oauth_states")
+
+
+class ScanSession(Base):
+    __tablename__ = "scan_sessions"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
+    emails_scanned: Mapped[int] = mapped_column(Integer, default=0)
+    accounts_found: Mapped[int] = mapped_column(Integer, default=0)
+    started_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    completed_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    user: Mapped[User] = relationship(back_populates="scan_sessions")
+    discovered_accounts: Mapped[List[DiscoveredAccount]] = relationship(
+        back_populates="scan_session", cascade="all, delete-orphan"
+    )
+
+
+class DiscoveredAccount(Base):
+    __tablename__ = "discovered_accounts"
+    __table_args__ = (
+        UniqueConstraint(
+            "scan_session_id", "email_address", "service_name", "source",
+            name="uq_scan_email_service_source",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    scan_session_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("scan_sessions.id", ondelete="CASCADE"), nullable=False
+    )
+    linked_email_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("linked_emails.id", ondelete="SET NULL"), nullable=True
+    )
+    email_address: Mapped[str] = mapped_column(String(320), nullable=False)
+    service_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    service_domain: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    source: Mapped[str] = mapped_column(String(50), nullable=False)
+    source_detail: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    confidence: Mapped[str] = mapped_column(String(10), default="confirmed")
+    breach_date: Mapped[Optional[datetime]] = mapped_column(Date, nullable=True)
+    discovered_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    scan_session: Mapped[ScanSession] = relationship(back_populates="discovered_accounts")

@@ -2,6 +2,7 @@ import typer
 
 from account_hub.cli.auth_commands import auth_app
 from account_hub.cli.email_commands import email_app
+from account_hub.cli.search_commands import search_app
 
 app = typer.Typer(
     name="accounthub",
@@ -11,6 +12,7 @@ app = typer.Typer(
 
 app.add_typer(auth_app, name="auth", help="Register, login, and manage your account")
 app.add_typer(email_app, name="email", help="Link, list, and unlink email addresses")
+app.add_typer(search_app, name="search", help="Scan for accounts and export results")
 
 
 @app.command()

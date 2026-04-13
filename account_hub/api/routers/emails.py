@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from account_hub.api.dependencies import get_current_user, get_db
+from account_hub.api.limiter import limiter
 from account_hub.db.models import User
 from account_hub.services.email_service import (
     EmailNotFoundError,
@@ -42,7 +43,9 @@ async def list_emails(
 
 
 @router.delete("/{email_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("5/minute")
 async def delete_email(
+    request: Request,
     email_id: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

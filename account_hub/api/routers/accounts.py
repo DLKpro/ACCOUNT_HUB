@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from account_hub.api.dependencies import get_current_user, get_db
+from account_hub.api.limiter import limiter
 from account_hub.db.models import User
 from account_hub.services.closure_service import (
     AccountNotFoundError,
@@ -54,7 +55,9 @@ class CompleteCloseBody(BaseModel):
 
 
 @router.post("/close", response_model=ClosureRequestResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("5/minute")
 async def create_closure_request(
+    request: Request,
     body: RequestCloseBody,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

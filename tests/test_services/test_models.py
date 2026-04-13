@@ -24,7 +24,10 @@ def test_all_models_registered_on_base():
 
 def test_user_columns():
     cols = {c.name for c in User.__table__.columns}
-    expected = {"id", "username", "email", "password_hash", "is_active", "created_at", "updated_at"}
+    expected = {
+        "id", "username", "email", "password_hash", "is_active",
+        "created_at", "updated_at", "failed_login_attempts", "locked_until",
+    }
     assert expected == cols
 
 

@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from account_hub.api.dependencies import get_current_user, get_db
+from account_hub.api.limiter import limiter
 from account_hub.db.models import User
 from account_hub.services.oauth_service import (
     DeviceCodePendingError,
@@ -88,7 +89,9 @@ async def initiate(
 
 
 @router.post("/callback", response_model=LinkResponse)
+@limiter.limit("10/minute")
 async def callback(
+    request: Request,
     body: CallbackRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -115,7 +118,9 @@ async def callback(
 
 
 @router.post("/poll")
+@limiter.limit("20/minute")
 async def poll(
+    request: Request,
     body: PollRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

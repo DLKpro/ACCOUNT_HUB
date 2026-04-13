@@ -1,4 +1,14 @@
+import os
+
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Minimum password length enforced at registration
+MIN_PASSWORD_LENGTH = 8
+
+# Account lockout settings
+MAX_FAILED_LOGIN_ATTEMPTS = 5
+LOCKOUT_DURATION_MINUTES = 15
 
 
 class Settings(BaseSettings):
@@ -11,6 +21,16 @@ class Settings(BaseSettings):
     secret_key: str = "change-me"
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
+
+    @model_validator(mode="after")
+    def _validate_secret_key(self) -> "Settings":
+        """Refuse to start with the default secret key in non-test environments."""
+        if self.secret_key == "change-me" and os.environ.get("TESTING") != "1":
+            raise ValueError(
+                "SECRET_KEY is set to the insecure default 'change-me'. "
+                "Set a strong random value (>= 32 bytes) in your .env file."
+            )
+        return self
 
     # Google OAuth
     google_client_id: str = ""

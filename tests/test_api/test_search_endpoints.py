@@ -16,7 +16,7 @@ from account_hub.security.encryption import encrypt_token
 async def _register(client: AsyncClient, username: str = None) -> str:
     """Register and return access token."""
     uname = username or f"user_{uuid.uuid4().hex[:8]}"
-    resp = await client.post("/auth/register", json={"username": uname, "password": "pass"})
+    resp = await client.post("/auth/register", json={"username": uname, "password": "testpass1"})
     assert resp.status_code == 201
     return resp.json()["access_token"]
 

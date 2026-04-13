@@ -46,7 +46,7 @@ export default function App() {
         <Route path="/scan/:sessionId" element={<ScanDetailPage />} />
         <Route path="/closures" element={<ClosuresPage />} />
       </Route>
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to={localStorage.getItem("refresh_token") ? "/dashboard" : localStorage.getItem("has_account") ? "/login" : "/register"} replace />} />
     </Routes>
   );
 }

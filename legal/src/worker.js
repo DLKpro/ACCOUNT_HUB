@@ -166,7 +166,7 @@ const TERMS_HTML = `<!DOCTYPE html>
     </div>
 
     <h2>1. Acceptance of Terms</h2>
-    <p>By downloading, installing, accessing, or using AccountHub (the &ldquo;Application&rdquo;), you agree to be bound by these Terms of Service (the &ldquo;Terms&rdquo;). If you do not agree to these Terms, do not use the Application. These Terms constitute a legally binding agreement between you (&ldquo;User&rdquo; or &ldquo;you&rdquo;) and Derek Kemle (&ldquo;Operator,&rdquo; &ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;).</p>
+    <p>By downloading, installing, accessing, or using AccountHub (the &ldquo;Application&rdquo;), you agree to be bound by these Terms of Service (the &ldquo;Terms&rdquo;). If you do not agree to these Terms, do not use the Application. These Terms constitute a legally binding agreement between you (&ldquo;User&rdquo; or &ldquo;you&rdquo;) and the operator of AccountHub (&ldquo;Operator,&rdquo; &ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;).</p>
     <p>We reserve the right to update or modify these Terms at any time. Your continued use of the Application after any changes constitutes acceptance of the revised Terms. We will make reasonable efforts to notify you of material changes.</p>
 
     <h2>2. Description of Service</h2>
@@ -198,7 +198,7 @@ const TERMS_HTML = `<!DOCTYPE html>
     </ul>
 
     <h2>6. Intellectual Property</h2>
-    <p>All rights, title, and interest in and to the Application, including all intellectual property rights, are owned by Derek Kemle. These Terms grant you a limited, non-exclusive, non-transferable, revocable license to use the Application for personal, non-commercial purposes, unless a separate commercial license is obtained.</p>
+    <p>All rights, title, and interest in and to the Application, including all intellectual property rights, are owned by the Operator. These Terms grant you a limited, non-exclusive, non-transferable, revocable license to use the Application for personal, non-commercial purposes, unless a separate commercial license is obtained.</p>
     <p>You may not copy, modify, distribute, sell, lease, or create derivative works based on the Application or any part thereof without prior written consent from the Operator.</p>
 
     <h2>7. Third-Party Services</h2>
@@ -218,7 +218,7 @@ const TERMS_HTML = `<!DOCTYPE html>
     <p>OUR TOTAL AGGREGATE LIABILITY ARISING OUT OF OR RELATING TO THESE TERMS OR THE APPLICATION SHALL NOT EXCEED THE GREATER OF (A) THE AMOUNT YOU HAVE PAID TO US IN THE TWELVE (12) MONTHS PRECEDING THE CLAIM, OR (B) ONE HUNDRED U.S. DOLLARS (\$100.00 USD).</p>
 
     <h2>11. Indemnification</h2>
-    <p>You agree to indemnify, defend, and hold harmless Derek Kemle from and against any and all claims, damages, obligations, losses, liabilities, costs, and expenses (including reasonable attorney&rsquo;s fees) arising from: (a) your use of the Application; (b) your violation of these Terms; (c) your violation of any third-party right, including any intellectual property or privacy right; or (d) any claim that your use of the Application caused damage to a third party.</p>
+    <p>You agree to indemnify, defend, and hold harmless the Operator from and against any and all claims, damages, obligations, losses, liabilities, costs, and expenses (including reasonable attorney&rsquo;s fees) arising from: (a) your use of the Application; (b) your violation of these Terms; (c) your violation of any third-party right, including any intellectual property or privacy right; or (d) any claim that your use of the Application caused damage to a third party.</p>
 
     <h2>12. Termination</h2>
     <p>We may suspend or terminate your access to the Application at any time, with or without cause, and with or without notice. Upon termination, your right to use the Application will immediately cease.</p>
@@ -279,7 +279,7 @@ const PRIVACY_HTML = `<!DOCTYPE html>
     </div>
 
     <h2>1. Introduction</h2>
-    <p>Derek Kemle (&ldquo;Operator,&rdquo; &ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;) operates AccountHub (the &ldquo;Application&rdquo;). This Privacy Policy explains how we collect, use, disclose, and safeguard your personal information when you use the Application. By using the Application, you consent to the data practices described in this policy.</p>
+    <p>The operator of AccountHub (&ldquo;Operator,&rdquo; &ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;) operates AccountHub (the &ldquo;Application&rdquo;). This Privacy Policy explains how we collect, use, disclose, and safeguard your personal information when you use the Application. By using the Application, you consent to the data practices described in this policy.</p>
     <p>We are committed to protecting your privacy. Please read this Privacy Policy carefully. If you do not agree with the terms of this Privacy Policy, please do not use the Application.</p>
 
     <h2>2. Information We Collect</h2>

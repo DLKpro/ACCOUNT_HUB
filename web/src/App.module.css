@@ -1,0 +1,27 @@
+.loading {
+  display: flex;
+  height: 100vh;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-midnight);
+}
+
+.wordmark {
+  font-size: 1.25rem;
+}
+
+.wordmarkLight {
+  font-weight: 300;
+  color: var(--color-slate-light);
+}
+
+.wordmarkBold {
+  font-weight: 600;
+  color: white;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

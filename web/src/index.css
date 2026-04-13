@@ -1,0 +1,62 @@
+@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap");
+
+@theme {
+  --color-midnight: #060F1E;
+  --color-midnight-light: #0C1A2E;
+  --color-midnight-lighter: #132240;
+  --color-midnight-border: #1E3054;
+  --color-teal: #2DD4BF;
+  --color-teal-dim: #2DD4BF40;
+  --color-teal-hover: #5EEAD4;
+  --color-slate: #94A3B8;
+  --color-slate-light: #CBD5E1;
+  --color-danger: #F87171;
+  --color-warning: #FBBF24;
+  --color-success: #34D399;
+  --font-sans: "Outfit", system-ui, sans-serif;
+}
+
+* {
+  border-color: var(--color-midnight-border);
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-midnight);
+  color: var(--color-slate-light);
+  font-family: var(--font-sans);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100svh;
+}
+
+::view-transition-group(*),
+::view-transition-old(*),
+::view-transition-new(*) {
+  animation-duration: 0.25s;
+  animation-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+::selection {
+  background-color: var(--color-teal-dim);
+  color: white;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-midnight-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-slate);
+}

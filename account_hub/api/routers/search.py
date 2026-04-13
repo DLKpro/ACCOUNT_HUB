@@ -69,6 +69,11 @@ async def create_scan(
     db: AsyncSession = Depends(get_db),
 ):
     """Start a new discovery scan across all linked emails."""
+    if not current_user.email_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Please verify your email address before running scans",
+        )
     session = await start_scan(db, current_user.id)
     return ScanStartResponse(
         scan_session_id=str(session.id),

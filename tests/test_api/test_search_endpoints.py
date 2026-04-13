@@ -13,16 +13,36 @@ from account_hub.db.models import LinkedEmail
 from account_hub.security.encryption import encrypt_token
 
 
-async def _register(client: AsyncClient, username: str = None) -> str:
-    """Register and return access token."""
+async def _register(client: AsyncClient, test_engine, username: str = None) -> str:
+    """Register, verify email, and return access token."""
     uname = username or f"user_{uuid.uuid4().hex[:8]}"
-    resp = await client.post("/auth/register", json={"username": uname, "password": "testpass1"})
+    resp = await client.post("/auth/register", json={"username": uname, "email": f"{uname}@test.com", "password": "testpass1"})
     assert resp.status_code == 201
-    return resp.json()["access_token"]
+    token = resp.json()["access_token"]
+    # Mark email as verified so scans work
+    await _verify_user(test_engine, token)
+    return token
 
 
 def _auth(token: str) -> dict:
     return {"Authorization": f"Bearer {token}"}
+
+
+async def _verify_user(test_engine, token: str):
+    """Mark the user as email-verified in the DB."""
+    from jose import jwt as jose_jwt
+    from account_hub.config import settings
+    from account_hub.db.models import User
+
+    payload = jose_jwt.decode(token, settings.secret_key, algorithms=["HS256"])
+    user_id = uuid.UUID(payload["sub"])
+    factory = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
+    async with factory() as session:
+        from sqlalchemy import select
+        result = await session.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one()
+        user.email_verified = True
+        await session.commit()
 
 
 async def _add_linked_email(
@@ -53,8 +73,8 @@ async def _add_linked_email(
 
 
 @pytest.mark.asyncio
-async def test_create_scan_no_emails(client: AsyncClient):
-    token = await _register(client)
+async def test_create_scan_no_emails(client: AsyncClient, test_engine):
+    token = await _register(client, test_engine)
     resp = await client.post("/search", headers=_auth(token))
     assert resp.status_code == 201
     data = resp.json()
@@ -64,7 +84,7 @@ async def test_create_scan_no_emails(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_create_scan_with_linked_email(client: AsyncClient, test_engine):
-    token = await _register(client, "scanwithmail")
+    token = await _register(client, test_engine, "scanwithmail")
     await _add_linked_email(test_engine, token, "user@gmail.com", "google")
 
     resp = await client.post("/search", headers=_auth(token))
@@ -92,8 +112,8 @@ async def test_create_scan_requires_auth(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_get_scan_detail(client: AsyncClient):
-    token = await _register(client)
+async def test_get_scan_detail(client: AsyncClient, test_engine):
+    token = await _register(client, test_engine)
     create = await client.post("/search", headers=_auth(token))
     sid = create.json()["scan_session_id"]
 
@@ -104,16 +124,16 @@ async def test_get_scan_detail(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_get_scan_not_found(client: AsyncClient):
-    token = await _register(client)
+async def test_get_scan_not_found(client: AsyncClient, test_engine):
+    token = await _register(client, test_engine)
     resp = await client.get(f"/search/{uuid.uuid4()}", headers=_auth(token))
     assert resp.status_code == 404
 
 
 @pytest.mark.asyncio
-async def test_get_scan_wrong_user(client: AsyncClient):
-    token1 = await _register(client, "scanowner2")
-    token2 = await _register(client, "scanother2")
+async def test_get_scan_wrong_user(client: AsyncClient, test_engine):
+    token1 = await _register(client, test_engine, "scanowner2")
+    token2 = await _register(client, test_engine, "scanother2")
 
     create = await client.post("/search", headers=_auth(token1))
     sid = create.json()["scan_session_id"]
@@ -126,8 +146,8 @@ async def test_get_scan_wrong_user(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_scan_history(client: AsyncClient):
-    token = await _register(client)
+async def test_scan_history(client: AsyncClient, test_engine):
+    token = await _register(client, test_engine)
     await client.post("/search", headers=_auth(token))
     await client.post("/search", headers=_auth(token))
 
@@ -137,17 +157,17 @@ async def test_scan_history(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_scan_history_empty(client: AsyncClient):
-    token = await _register(client)
+async def test_scan_history_empty(client: AsyncClient, test_engine):
+    token = await _register(client, test_engine)
     resp = await client.get("/search/history", headers=_auth(token))
     assert resp.status_code == 200
     assert resp.json() == []
 
 
 @pytest.mark.asyncio
-async def test_scan_history_scoped_to_user(client: AsyncClient):
-    token1 = await _register(client, "histuser1")
-    token2 = await _register(client, "histuser2")
+async def test_scan_history_scoped_to_user(client: AsyncClient, test_engine):
+    token1 = await _register(client, test_engine, "histuser1")
+    token2 = await _register(client, test_engine, "histuser2")
 
     await client.post("/search", headers=_auth(token1))
     await client.post("/search", headers=_auth(token1))
@@ -164,7 +184,7 @@ async def test_scan_history_scoped_to_user(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_export_csv(client: AsyncClient, test_engine):
-    token = await _register(client, "exportuser")
+    token = await _register(client, test_engine, "exportuser")
     await _add_linked_email(test_engine, token, "export@gmail.com", "google")
 
     create = await client.post("/search", headers=_auth(token))
@@ -178,8 +198,8 @@ async def test_export_csv(client: AsyncClient, test_engine):
 
 
 @pytest.mark.asyncio
-async def test_export_empty_scan(client: AsyncClient):
-    token = await _register(client)
+async def test_export_empty_scan(client: AsyncClient, test_engine):
+    token = await _register(client, test_engine)
     create = await client.post("/search", headers=_auth(token))
     sid = create.json()["scan_session_id"]
 
@@ -191,8 +211,8 @@ async def test_export_empty_scan(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_export_not_found(client: AsyncClient):
-    token = await _register(client)
+async def test_export_not_found(client: AsyncClient, test_engine):
+    token = await _register(client, test_engine)
     resp = await client.get(f"/search/{uuid.uuid4()}/export", headers=_auth(token))
     assert resp.status_code == 404
 
@@ -204,14 +224,14 @@ async def test_export_not_found(client: AsyncClient):
 async def test_full_discovery_flow(client: AsyncClient, test_engine):
     """Integration: register → link email → scan → get results → export CSV."""
     # Register
-    token = await _register(client, "fullscanuser")
+    token = await _register(client, test_engine, "fullscanuser")
 
     # Link an email (direct DB insert since we can't do real OAuth)
     await _add_linked_email(test_engine, token, "full@gmail.com", "google")
 
     # Verify email is linked
     emails = await client.get("/emails", headers=_auth(token))
-    assert len(emails.json()) == 1
+    assert len(emails.json()) == 2  # primary + linked
 
     # Run scan
     scan = await client.post("/search", headers=_auth(token))

@@ -102,11 +102,12 @@ async def test_callback_invalid_state(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_list_emails_empty(client: AsyncClient):
+async def test_list_emails_shows_primary(client: AsyncClient):
     token = await register_user(client)
     resp = await client.get("/emails", headers=auth_headers(token))
     assert resp.status_code == 200
-    assert resp.json() == []
+    assert len(resp.json()) == 1
+    assert resp.json()[0]["is_primary"] is True
 
 
 @pytest.mark.asyncio
@@ -140,7 +141,7 @@ async def test_delete_invalid_email_id(client: AsyncClient):
 async def test_deleted_user_cannot_list_emails(client: AsyncClient):
     """After deleting an account, the token should no longer work for email endpoints."""
     resp = await client.post("/auth/register", json={
-        "username": "deletedemails", "password": "testpass1"
+        "username": "deletedemails", "email": "deletedemails@test.com", "password": "testpass1"
     })
     token = resp.json()["access_token"]
 
@@ -181,7 +182,7 @@ async def test_full_auth_then_initiate_flow(client: AsyncClient):
     """Integration: register → login → initiate OAuth → verify state exists."""
     # Register
     reg = await client.post("/auth/register", json={
-        "username": "fullflowemailuser", "password": "testpass1"
+        "username": "fullflowemailuser", "email": "fullflowemailuser@test.com", "password": "testpass1"
     })
     assert reg.status_code == 201
 
@@ -200,10 +201,11 @@ async def test_full_auth_then_initiate_flow(client: AsyncClient):
     assert init.status_code == 200
     assert init.json()["auth_url"] is not None
 
-    # Verify email list is still empty (no callback completed)
+    # Verify email list only has the primary email (no OAuth callback completed)
     emails = await client.get("/emails", headers=auth_headers(token))
     assert emails.status_code == 200
-    assert emails.json() == []
+    assert len(emails.json()) == 1  # just the primary account email
+    assert emails.json()[0]["is_primary"] is True
 
 
 # --- Device Code Initiate (mocked service) ---

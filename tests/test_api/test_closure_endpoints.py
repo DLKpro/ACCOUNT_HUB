@@ -68,7 +68,7 @@ async def test_close_info_unknown_service(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_request_closure(client: AsyncClient, test_engine):
-    token = await register_user(client, "closeuser1")
+    token = await register_user(client, "closeuser1", verified=True, test_engine=test_engine)
     await _add_linked_email(test_engine, token, "close@gmail.com")
     account_id = await _scan_and_get_account_id(client, token)
 
@@ -117,7 +117,7 @@ async def test_list_closure_requests_empty(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_list_closure_requests_after_creating(client: AsyncClient, test_engine):
-    token = await register_user(client, "listclose")
+    token = await register_user(client, "listclose", verified=True, test_engine=test_engine)
     await _add_linked_email(test_engine, token, "list@gmail.com")
     account_id = await _scan_and_get_account_id(client, token)
 
@@ -136,7 +136,7 @@ async def test_list_closure_requests_after_creating(client: AsyncClient, test_en
 
 @pytest.mark.asyncio
 async def test_complete_closure(client: AsyncClient, test_engine):
-    token = await register_user(client, "completeclose")
+    token = await register_user(client, "completeclose", verified=True, test_engine=test_engine)
     await _add_linked_email(test_engine, token, "complete@gmail.com")
     account_id = await _scan_and_get_account_id(client, token)
 
@@ -171,8 +171,8 @@ async def test_complete_closure_not_found(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_closure_scoped_to_user(client: AsyncClient, test_engine):
     """User 2 cannot see or complete User 1's closure requests."""
-    token1 = await register_user(client, "closescope1")
-    token2 = await register_user(client, "closescope2")
+    token1 = await register_user(client, "closescope1", verified=True, test_engine=test_engine)
+    token2 = await register_user(client, "closescope2", verified=True, test_engine=test_engine)
     await _add_linked_email(test_engine, token1, "scope@gmail.com")
     account_id = await _scan_and_get_account_id(client, token1)
 
@@ -201,12 +201,12 @@ async def test_closure_scoped_to_user(client: AsyncClient, test_engine):
 async def test_full_closure_lifecycle(client: AsyncClient, test_engine):
     """Integration across all 5 phases: auth → email → scan → close → delete."""
     # Phase 2: Register
-    token = await register_user(client, "lifecycleuser")
+    token = await register_user(client, "lifecycleuser", verified=True, test_engine=test_engine)
 
     # Phase 3: Link email
     await _add_linked_email(test_engine, token, "lifecycle@gmail.com")
     emails = await client.get("/emails", headers=auth_headers(token))
-    assert len(emails.json()) == 1
+    assert len(emails.json()) == 2  # primary + linked
 
     # Phase 4: Scan
     scan = await client.post("/search", headers=auth_headers(token))

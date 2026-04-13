@@ -16,8 +16,16 @@ from account_hub.services.password_reset_service import (
 from account_hub.services.password_reset_service import (
     PasswordTooShortError as ResetPasswordTooShortError,
 )
+from account_hub.services.email_verification_service import (
+    AlreadyVerifiedError,
+    InvalidVerificationTokenError,
+    create_verification_token,
+    verify_email,
+)
 from account_hub.services.user_service import (
     AccountLockedError,
+    EmailInvalidError,
+    EmailTakenError,
     InvalidCredentialsError,
     InvalidTokenError,
     PasswordTooShortError,
@@ -37,12 +45,21 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 class RegisterRequest(BaseModel):
     username: str
+    email: str
     password: str
 
 
 class LoginRequest(BaseModel):
-    username: str
+    username: str  # accepts username or email
     password: str
+
+
+class VerifyEmailRequest(BaseModel):
+    token: str
+
+
+class ResendVerificationRequest(BaseModel):
+    pass  # uses current authenticated user
 
 
 class RefreshRequest(BaseModel):
@@ -71,15 +88,19 @@ class TokenResponse(BaseModel):
 class RegisterResponse(BaseModel):
     id: str
     username: str
+    email: str
+    email_verified: bool
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+    verification_url: str | None = None
 
 
 class UserResponse(BaseModel):
     id: str
     username: str
-    email: str | None = None
+    email: str
+    email_verified: bool
     is_active: bool
     created_at: str
 
@@ -90,18 +111,29 @@ class UserResponse(BaseModel):
 @router.post("/register", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("5/minute")
 async def register(request: Request, body: RegisterRequest, db: AsyncSession = Depends(get_db)):
+    import logging
+    logger = logging.getLogger("account_hub.security")
+
     try:
-        user, tokens = await register_user(db, body.username, body.password)
-    except (UsernameInvalidError, PasswordTooShortError) as e:
+        user, tokens = await register_user(db, body.username, body.email, body.password)
+    except (UsernameInvalidError, EmailInvalidError, PasswordTooShortError) as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except UsernameTakenError as e:
+    except (UsernameTakenError, EmailTakenError) as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+
+    # Generate email verification token
+    vtoken = await create_verification_token(db, user.id)
+    verification_url = f"/verify-email?token={vtoken}"
+    logger.info("VERIFICATION_LINK: %s (user=%s)", verification_url, user.username)
 
     return RegisterResponse(
         id=str(user.id),
         username=user.username,
+        email=user.email,
+        email_verified=False,
         access_token=tokens.access_token,
         refresh_token=tokens.refresh_token,
+        verification_url=verification_url,
     )
 
 
@@ -141,9 +173,47 @@ async def me(current_user: User = Depends(get_current_user)):
         id=str(current_user.id),
         username=current_user.username,
         email=current_user.email,
+        email_verified=current_user.email_verified,
         is_active=current_user.is_active,
         created_at=current_user.created_at.isoformat(),
     )
+
+
+@router.post("/verify-email")
+@limiter.limit("10/minute")
+async def verify_email_endpoint(
+    request: Request, body: VerifyEmailRequest, db: AsyncSession = Depends(get_db)
+):
+    """Verify email address using the token from the verification link."""
+    try:
+        user = await verify_email(db, body.token)
+    except InvalidVerificationTokenError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except AlreadyVerifiedError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+
+    return {"message": "Email verified successfully.", "email": user.email}
+
+
+@router.post("/resend-verification")
+@limiter.limit("3/minute")
+async def resend_verification(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Resend the email verification token."""
+    import logging
+    logger = logging.getLogger("account_hub.security")
+
+    if current_user.email_verified:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email is already verified")
+
+    vtoken = await create_verification_token(db, current_user.id)
+    verification_url = f"/verify-email?token={vtoken}"
+    logger.info("VERIFICATION_LINK: %s (user=%s)", verification_url, current_user.username)
+
+    return {"message": "Verification link generated.", "verification_url": verification_url}
 
 
 @router.post("/forgot-password")

@@ -58,9 +58,9 @@ export default function LoginPage() {
               <form onSubmit={handleSubmit} className={styles.form}>
                 {error && <div className={styles.error}>{error}</div>}
                 <div className={styles.field}>
-                  <label className={styles.label}>Username</label>
+                  <label className={styles.label}>Username or email</label>
                   <input type="text" value={username} onChange={(e) => setUsername(e.target.value)}
-                    className={styles.input} placeholder="your_username" required autoFocus />
+                    className={styles.input} placeholder="your_username or you@example.com" required autoFocus />
                 </div>
                 <div className={styles.field}>
                   <label className={styles.label}>Password</label>

@@ -162,24 +162,31 @@ export default function EmailsPage() {
         ) : emails && emails.length > 0 ? (
           <div className={styles.emailList}>
             {emails.map((email) => (
-              <div key={email.id} className={styles.emailRow}>
+              <div key={email.id} className={`${styles.emailRow} ${email.is_primary ? styles.emailPrimary : ""}`}>
                 <div className={styles.emailInfo}>
                   <Mail size={16} className={styles.emailIcon} />
                   <div>
-                    <div className={styles.emailAddress}>{email.email_address}</div>
+                    <div className={styles.emailAddress}>
+                      {email.email_address}
+                      {email.is_primary && <span className={styles.primaryBadge}>Primary</span>}
+                    </div>
                     <div className={styles.emailMeta}>
-                      {email.provider} &middot; {email.is_verified ? "Verified" : "Unverified"}
+                      {email.is_primary ? "Account email" : email.provider}
+                      {" \u00B7 "}{email.is_verified ? "Verified" : "Unverified"}
                       {email.linked_at && ` \u00B7 Linked ${new Date(email.linked_at).toLocaleDateString()}`}
                     </div>
                   </div>
                 </div>
-                <button
-                  onClick={() => { if (confirm("Unlink this email?")) unlink.mutate(email.id); }}
-                  className={styles.unlinkBtn}
-                  title="Unlink email"
-                >
-                  <Trash2 size={16} />
-                </button>
+                {!email.is_primary && (
+                  <button
+                    type="button"
+                    onClick={() => { if (confirm("Unlink this email?")) unlink.mutate(email.id); }}
+                    className={styles.unlinkBtn}
+                    title="Unlink email"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
               </div>
             ))}
           </div>

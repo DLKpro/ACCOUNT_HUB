@@ -17,15 +17,12 @@
 
 /* Logo: starts centered in viewport, slides up and shrinks into header */
 .logo {
-  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1),
-              margin 0.9s cubic-bezier(0.22, 1, 0.36, 1);
-  transform: scale(1) translateY(35vh);
-  margin-bottom: 0;
+  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: scale(1) translateY(12vh);
 }
 
 .logoSmall {
   transform: scale(0.4) translateY(0);
-  margin-bottom: 0;
 }
 
 /* Content below logo: slides up and fades in */

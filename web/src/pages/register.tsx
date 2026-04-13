@@ -8,6 +8,7 @@ import registerStyles from "./register.module.css";
 
 export default function RegisterPage() {
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
@@ -22,7 +23,7 @@ export default function RegisterPage() {
     if (password !== confirm) { setError("Passwords do not match"); return; }
     setLoading(true);
     try {
-      await register(username, password);
+      await register(username, email, password);
       navigate("/dashboard");
     } catch (err) {
       if (err instanceof ApiError) setError(err.detail);
@@ -34,47 +35,58 @@ export default function RegisterPage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.container}>
-        <div className={styles.header}>
-          <BrandLogo size={56} />
-          <h1 className={styles.wordmark}>
-            <span className={styles.wordmarkLight}>account</span>
-            <span className={styles.wordmarkBold}>hub</span>
-          </h1>
-          <p className={styles.subtitle}>Create your account</p>
+      <div className={styles.layout}>
+        <div className={styles.logo} style={{ transform: "scale(0.4)" }}>
+          <BrandLogo size={140} />
         </div>
 
-        <form onSubmit={handleSubmit} className={styles.form}>
-          {error && <div className={styles.error}>{error}</div>}
-
-          <div className={styles.field}>
-            <label className={styles.label}>Username</label>
-            <input type="text" value={username} onChange={(e) => setUsername(e.target.value)}
-              className={styles.input} placeholder="your_username" required autoFocus />
-            <p className={registerStyles.hint}>3-64 characters, lowercase letters, numbers, underscores</p>
+        <div className={styles.content} style={{ opacity: 1, transform: "translateY(0)" }}>
+          <div className={styles.header}>
+            <h1 className={styles.wordmark}>
+              <span className={styles.wordmarkLight}>account</span>
+              <span className={styles.wordmarkBold}>hub</span>
+            </h1>
+            <p className={styles.subtitle}>Create your account</p>
           </div>
 
-          <div className={styles.field}>
-            <label className={styles.label}>Password</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-              className={styles.input} placeholder="********" required minLength={8} />
-          </div>
+          <form onSubmit={handleSubmit} className={styles.form}>
+            {error && <div className={styles.error}>{error}</div>}
 
-          <div className={styles.field}>
-            <label className={styles.label}>Confirm Password</label>
-            <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)}
-              className={styles.input} placeholder="********" required />
-          </div>
+            <div className={styles.field}>
+              <label className={styles.label}>Username</label>
+              <input type="text" value={username} onChange={(e) => setUsername(e.target.value)}
+                className={styles.input} placeholder="your_username" required autoFocus />
+              <p className={registerStyles.hint}>3-64 characters, lowercase letters, numbers, underscores</p>
+            </div>
 
-          <button type="submit" disabled={loading} className={styles.button}>
-            {loading ? "Creating account..." : "Create account"}
-          </button>
-        </form>
+            <div className={styles.field}>
+              <label className={styles.label}>Email</label>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                className={styles.input} placeholder="you@example.com" required />
+            </div>
 
-        <p className={styles.switchLink}>
-          Already have an account?{" "}
-          <Link to="/login" className={styles.link}>Sign in</Link>
-        </p>
+            <div className={styles.field}>
+              <label className={styles.label}>Password</label>
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+                className={styles.input} placeholder="********" required minLength={8} />
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label}>Confirm Password</label>
+              <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)}
+                className={styles.input} placeholder="********" required />
+            </div>
+
+            <button type="submit" disabled={loading} className={styles.button}>
+              {loading ? "Creating account..." : "Create account"}
+            </button>
+          </form>
+
+          <p className={styles.switchLink}>
+            Already have an account?{" "}
+            <Link to="/login" className={styles.link}>Sign in</Link>
+          </p>
+        </div>
       </div>
     </div>
   );

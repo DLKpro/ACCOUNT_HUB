@@ -10,7 +10,7 @@ from httpx import AsyncClient
 @pytest.mark.asyncio
 async def test_register_success(client: AsyncClient):
     resp = await client.post("/auth/register", json={
-        "username": "newuser",
+        "username": "newuser", "email": "newuser@test.com",
         "password": "strongpassword",
     })
     assert resp.status_code == 201
@@ -25,7 +25,7 @@ async def test_register_success(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_register_invalid_username(client: AsyncClient):
     resp = await client.post("/auth/register", json={
-        "username": "ab",  # too short
+        "username": "ab", "email": "ab@test.com",  # too short
         "password": "testpass1",
     })
     assert resp.status_code == 400
@@ -34,11 +34,11 @@ async def test_register_invalid_username(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_register_duplicate_username(client: AsyncClient):
     await client.post("/auth/register", json={
-        "username": "dupeuser",
+        "username": "dupeuser", "email": "dupeuser@test.com",
         "password": "testpass1",
     })
     resp = await client.post("/auth/register", json={
-        "username": "dupeuser",
+        "username": "dupeuser", "email": "dupeuser2@test.com",
         "password": "testpass2",
     })
     assert resp.status_code == 409
@@ -48,7 +48,7 @@ async def test_register_duplicate_username(client: AsyncClient):
 async def test_login_success(client: AsyncClient):
     # Register first
     await client.post("/auth/register", json={
-        "username": "loginuser",
+        "username": "loginuser", "email": "loginuser@test.com",
         "password": "mypassword",
     })
     # Then login
@@ -65,7 +65,7 @@ async def test_login_success(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_login_wrong_password(client: AsyncClient):
     await client.post("/auth/register", json={
-        "username": "wrongpwuser",
+        "username": "wrongpwuser", "email": "wrongpwuser@test.com",
         "password": "correctpass",
     })
     resp = await client.post("/auth/login", json={
@@ -87,7 +87,7 @@ async def test_login_nonexistent_user(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_me_with_valid_token(client: AsyncClient):
     reg = await client.post("/auth/register", json={
-        "username": "meuser",
+        "username": "meuser", "email": "meuser@test.com",
         "password": "testpass1",
     })
     token = reg.json()["access_token"]
@@ -113,7 +113,7 @@ async def test_me_with_invalid_token(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_refresh_returns_new_tokens(client: AsyncClient):
     reg = await client.post("/auth/register", json={
-        "username": "refreshuser",
+        "username": "refreshuser", "email": "refreshuser@test.com",
         "password": "testpass1",
     })
     refresh_token = reg.json()["refresh_token"]
@@ -133,7 +133,7 @@ async def test_refresh_returns_new_tokens(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_refresh_with_access_token_fails(client: AsyncClient):
     reg = await client.post("/auth/register", json={
-        "username": "badrefreshuser",
+        "username": "badrefreshuser", "email": "badrefreshuser@test.com",
         "password": "testpass1",
     })
     access_token = reg.json()["access_token"]
@@ -150,7 +150,7 @@ async def test_refresh_with_garbage_fails(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_delete_account(client: AsyncClient):
     reg = await client.post("/auth/register", json={
-        "username": "deleteuser",
+        "username": "deleteuser", "email": "deleteuser@test.com",
         "password": "testpass1",
     })
     token = reg.json()["access_token"]
@@ -171,7 +171,7 @@ async def test_delete_account(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_delete_account_wrong_password(client: AsyncClient):
     reg = await client.post("/auth/register", json={
-        "username": "nodelete2",
+        "username": "nodelete2", "email": "nodelete2@test.com",
         "password": "correctpass",
     })
     token = reg.json()["access_token"]
@@ -189,7 +189,7 @@ async def test_full_register_login_me_flow(client: AsyncClient):
     """Integration: register → login → me → verify consistency."""
     # Register
     reg = await client.post("/auth/register", json={
-        "username": "fullflowuser",
+        "username": "fullflowuser", "email": "fullflowuser@test.com",
         "password": "flowpass1",
     })
     assert reg.status_code == 201
@@ -218,7 +218,7 @@ async def test_register_login_refresh_me_flow(client: AsyncClient):
     """Integration: register → login → refresh → me with refreshed token."""
     # Register
     await client.post("/auth/register", json={
-        "username": "refreshflowuser",
+        "username": "refreshflowuser", "email": "refreshflowuser@test.com",
         "password": "testpass1",
     })
 

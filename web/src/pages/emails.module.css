@@ -29,7 +29,9 @@
 .emailRow { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-radius: 0.75rem; border: 1px solid var(--color-midnight-border); background-color: var(--color-midnight-light); }
 .emailInfo { display: flex; align-items: center; gap: 0.75rem; }
 .emailIcon { color: var(--color-teal); flex-shrink: 0; }
-.emailAddress { font-size: 0.875rem; color: var(--color-slate-light); font-weight: 500; }
+.emailPrimary { border-color: color-mix(in srgb, var(--color-teal) 25%, transparent); }
+.emailAddress { font-size: 0.875rem; color: var(--color-slate-light); font-weight: 500; display: flex; align-items: center; gap: 0.5rem; }
+.primaryBadge { display: inline-block; padding: 0.0625rem 0.5rem; border-radius: 9999px; background-color: color-mix(in srgb, var(--color-teal) 15%, transparent); color: var(--color-teal); font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
 .emailMeta { font-size: 0.75rem; color: var(--color-slate); margin-top: 0.125rem; }
 .unlinkBtn { padding: 0.5rem; border-radius: 0.5rem; background: none; border: none; color: var(--color-slate); cursor: pointer; transition: background-color 0.15s, color 0.15s; }
 .unlinkBtn:hover { background-color: var(--color-midnight-lighter); color: var(--color-danger); }

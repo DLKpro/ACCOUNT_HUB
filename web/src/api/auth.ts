@@ -6,10 +6,10 @@ import type {
 import { apiFetch } from "./client";
 
 export const authApi = {
-  register: (username: string, password: string) =>
+  register: (username: string, email: string, password: string) =>
     apiFetch<RegisterResponse>("/auth/register", {
       method: "POST",
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ username, email, password }),
       skipAuth: true,
     }),
 
@@ -18,6 +18,18 @@ export const authApi = {
       method: "POST",
       body: JSON.stringify({ username, password }),
       skipAuth: true,
+    }),
+
+  verifyEmail: (token: string) =>
+    apiFetch<{ message: string; email: string }>("/auth/verify-email", {
+      method: "POST",
+      body: JSON.stringify({ token }),
+      skipAuth: true,
+    }),
+
+  resendVerification: () =>
+    apiFetch<{ message: string; verification_url: string }>("/auth/resend-verification", {
+      method: "POST",
     }),
 
   refresh: (refreshToken: string) =>

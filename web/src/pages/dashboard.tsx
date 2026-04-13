@@ -1,14 +1,19 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/auth-store";
+import { authApi } from "@/api/auth";
 import { emailsApi } from "@/api/emails";
 import { scanApi } from "@/api/scan";
 import { closuresApi } from "@/api/closures";
-import { Mail, Search, Trash2, ArrowRight } from "lucide-react";
+import { Mail, Search, Trash2, ArrowRight, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
 import styles from "./dashboard.module.css";
 
 export default function DashboardPage() {
   const user = useAuthStore((s) => s.user);
+  const fetchUser = useAuthStore((s) => s.fetchUser);
+  const [resending, setResending] = useState(false);
+  const [verifyUrl, setVerifyUrl] = useState<string | null>(null);
   const { data: emails } = useQuery({ queryKey: ["emails"], queryFn: emailsApi.list });
   const { data: scans } = useQuery({ queryKey: ["scan-history"], queryFn: () => scanApi.history(1) });
   const { data: closures } = useQuery({ queryKey: ["closures"], queryFn: closuresApi.list });
@@ -16,8 +21,32 @@ export default function DashboardPage() {
   const latestScan = scans?.[0];
   const pendingClosures = closures?.filter((c) => c.status === "pending") ?? [];
 
+  const handleResend = async () => {
+    setResending(true);
+    try {
+      const result = await authApi.resendVerification();
+      if (result.verification_url) setVerifyUrl(result.verification_url);
+      await fetchUser();
+    } catch { /* ignore */ }
+    setResending(false);
+  };
+
   return (
     <div className={styles.page}>
+      {user && !user.email_verified && (
+        <div className={styles.verifyBanner}>
+          <AlertTriangle size={16} />
+          <span>Please verify your email address ({user.email}) to unlock all features.</span>
+          {verifyUrl ? (
+            <Link to={verifyUrl} className={styles.verifyLink}>Verify now</Link>
+          ) : (
+            <button type="button" onClick={handleResend} disabled={resending} className={styles.verifyLink}>
+              {resending ? "Sending..." : "Resend verification"}
+            </button>
+          )}
+        </div>
+      )}
+
       <div className={styles.header}>
         <h1 className={styles.title}>
           Welcome back, <span className={styles.accent}>{user?.username}</span>

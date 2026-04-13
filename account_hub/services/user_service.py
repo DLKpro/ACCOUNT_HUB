@@ -24,6 +24,7 @@ from account_hub.security.jwt import (
 security_logger = logging.getLogger("account_hub.security")
 
 USERNAME_PATTERN = re.compile(r"^[a-z0-9_]{3,64}$")
+EMAIL_PATTERN = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
 
 
 class UserServiceError(Exception):
@@ -31,6 +32,14 @@ class UserServiceError(Exception):
 
 
 class UsernameInvalidError(UserServiceError):
+    pass
+
+
+class EmailInvalidError(UserServiceError):
+    pass
+
+
+class EmailTakenError(UserServiceError):
     pass
 
 
@@ -61,15 +70,19 @@ class TokenPair:
 
 
 async def register_user(
-    db: AsyncSession, username: str, password: str
+    db: AsyncSession, username: str, email: str, password: str
 ) -> tuple[User, TokenPair]:
     """Create a new user and return the user + token pair."""
     username = username.lower().strip()
+    email = email.lower().strip()
 
     if not USERNAME_PATTERN.match(username):
         raise UsernameInvalidError(
             "Username must be 3-64 characters, lowercase letters, numbers, and underscores only"
         )
+
+    if not EMAIL_PATTERN.match(email):
+        raise EmailInvalidError("Please enter a valid email address")
 
     if len(password) < MIN_PASSWORD_LENGTH:
         raise PasswordTooShortError(
@@ -80,8 +93,13 @@ async def register_user(
     if existing.scalar_one_or_none() is not None:
         raise UsernameTakenError(f"Username '{username}' is already taken")
 
+    existing_email = await db.execute(select(User).where(User.email == email))
+    if existing_email.scalar_one_or_none() is not None:
+        raise EmailTakenError("An account with this email already exists")
+
     user = User(
         username=username,
+        email=email,
         password_hash=hash_password(password),
     )
     db.add(user)
@@ -100,10 +118,17 @@ async def register_user(
 async def authenticate_user(
     db: AsyncSession, username: str, password: str
 ) -> tuple[User, TokenPair]:
-    """Verify credentials and return the user + token pair."""
-    username = username.lower().strip()
+    """Verify credentials and return the user + token pair.
 
-    result = await db.execute(select(User).where(User.username == username))
+    The `username` parameter accepts either a username or email address.
+    """
+    identifier = username.lower().strip()
+
+    # Try username first, then email
+    if "@" in identifier:
+        result = await db.execute(select(User).where(User.email == identifier))
+    else:
+        result = await db.execute(select(User).where(User.username == identifier))
     user = result.scalar_one_or_none()
 
     if user is None:

@@ -8,6 +8,7 @@ import LoginPage from "@/pages/login";
 import RegisterPage from "@/pages/register";
 import ForgotPasswordPage from "@/pages/forgot-password";
 import ResetPasswordPage from "@/pages/reset-password";
+import VerifyEmailPage from "@/pages/verify-email";
 import DashboardPage from "@/pages/dashboard";
 import EmailsPage from "@/pages/emails";
 import ScanPage from "@/pages/scan";
@@ -37,6 +38,7 @@ export default function App() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route element={<AuthGuard><AppLayout /></AuthGuard>}>
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/emails" element={<EmailsPage />} />

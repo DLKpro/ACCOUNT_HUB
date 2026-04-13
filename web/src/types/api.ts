@@ -7,12 +7,16 @@ export interface TokenResponse {
 export interface RegisterResponse extends TokenResponse {
   id: string;
   username: string;
+  email: string;
+  email_verified: boolean;
+  verification_url?: string;
 }
 
 export interface UserResponse {
   id: string;
   username: string;
-  email: string | null;
+  email: string;
+  email_verified: boolean;
   is_active: boolean;
   created_at: string;
 }
@@ -22,6 +26,7 @@ export interface LinkedEmailResponse {
   email_address: string;
   provider: string;
   is_verified: boolean;
+  is_primary: boolean;
   linked_at: string;
 }
 

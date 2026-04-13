@@ -89,6 +89,8 @@ class OAuthState(Base):
     )
     provider: Mapped[str] = mapped_column(String(20), nullable=False)
     redirect_port: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    code_verifier: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    nonce: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

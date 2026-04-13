@@ -1,12 +1,20 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+import base64
+import hashlib
+import hmac
+import json
+import logging
+import uuid
+
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from pydantic import BaseModel
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from account_hub.api.dependencies import get_current_user, get_db
 from account_hub.api.limiter import limiter
-from account_hub.db.models import User
+from account_hub.db.models import LinkedEmail, User
 from account_hub.services.oauth_service import (
     DeviceCodePendingError,
     EmailAlreadyLinkedError,
@@ -140,4 +148,91 @@ async def poll(
         linked_email_id=str(result.linked_email_id),
         email_address=result.email_address,
         provider=result.provider,
+    )
+
+
+# --- Meta Data Deletion Callback ---
+
+logger = logging.getLogger("account_hub.oauth")
+
+
+def _parse_meta_signed_request(signed_request: str, app_secret: str) -> dict:
+    """Decode and verify a Meta signed_request using HMAC-SHA256."""
+    parts = signed_request.split(".", 1)
+    if len(parts) != 2:
+        raise ValueError("Invalid signed_request format")
+
+    encoded_sig, payload = parts
+    # Meta uses URL-safe base64 without padding
+    sig = base64.urlsafe_b64decode(encoded_sig + "==")
+    data = json.loads(base64.urlsafe_b64decode(payload + "=="))
+
+    expected_sig = hmac.new(
+        app_secret.encode("utf-8"), payload.encode("utf-8"), hashlib.sha256
+    ).digest()
+
+    if not hmac.compare_digest(sig, expected_sig):
+        raise ValueError("Invalid signature")
+
+    return data
+
+
+class MetaDeletionResponse(BaseModel):
+    url: str
+    confirmation_code: str
+
+
+@router.post("/meta/data-deletion", response_model=MetaDeletionResponse)
+async def meta_data_deletion(
+    request: Request,
+    signed_request: str = Form(...),
+    db: AsyncSession = Depends(get_db),
+):
+    """Meta data deletion callback. Called by Meta when a user requests deletion of their data."""
+    from account_hub.config import settings
+    from account_hub.services.email_service import try_revoke_token
+
+    if not settings.meta_client_secret:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Not configured")
+
+    try:
+        data = _parse_meta_signed_request(signed_request, settings.meta_client_secret)
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid signed request")
+
+    meta_user_id = str(data.get("user_id", ""))
+    if not meta_user_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing user_id")
+
+    # Find and delete all Meta-linked emails for this provider user
+    result = await db.execute(
+        select(LinkedEmail).where(
+            LinkedEmail.provider == "meta",
+            LinkedEmail.provider_user_id == meta_user_id,
+        )
+    )
+    linked_emails = result.scalars().all()
+
+    for linked_email in linked_emails:
+        await try_revoke_token(linked_email)
+
+    if linked_emails:
+        await db.execute(
+            delete(LinkedEmail).where(
+                LinkedEmail.provider == "meta",
+                LinkedEmail.provider_user_id == meta_user_id,
+            )
+        )
+        await db.commit()
+
+    confirmation_code = uuid.uuid4().hex
+    logger.info(
+        "META_DATA_DELETION: meta_user_id=%s emails_deleted=%d confirmation=%s",
+        meta_user_id, len(linked_emails), confirmation_code,
+    )
+
+    app_url = settings.app_url or "https://dlopro.com"
+    return MetaDeletionResponse(
+        url=f"{app_url}/data-deletion?code={confirmation_code}",
+        confirmation_code=confirmation_code,
     )

@@ -15,4 +15,5 @@ def setup_apple() -> None:
         extra_authorize_params={
             "response_mode": "form_post",
         },
+        revoke_url="https://appleid.apple.com/auth/revoke",
     ))

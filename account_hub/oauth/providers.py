@@ -48,4 +48,10 @@ def is_provider_configured(name: str) -> bool:
     if name not in _registry:
         return False
     p = _registry[name]
+    if name == "apple":
+        from account_hub.config import settings
+        return bool(
+            p.client_id and settings.apple_team_id
+            and settings.apple_key_id and settings.apple_private_key_path
+        )
     return bool(p.client_id and p.client_secret)

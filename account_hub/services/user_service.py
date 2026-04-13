@@ -211,6 +211,15 @@ async def delete_account(db: AsyncSession, user: User, password: str) -> None:
         security_logger.warning("SECURITY_EVENT: account_delete_failed user=%s", user.id)
         raise InvalidCredentialsError("Incorrect password")
 
+    # Revoke all OAuth tokens before cascade deletion destroys the encrypted tokens
+    from account_hub.db.models import LinkedEmail
+    from account_hub.services.email_service import try_revoke_token
+    result = await db.execute(
+        select(LinkedEmail).where(LinkedEmail.user_id == user.id)
+    )
+    for linked_email in result.scalars().all():
+        await try_revoke_token(linked_email)
+
     security_logger.warning("SECURITY_EVENT: account_deleted user=%s", user.id)
     await db.delete(user)
     await db.commit()

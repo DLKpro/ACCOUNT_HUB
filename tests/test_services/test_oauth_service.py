@@ -207,11 +207,16 @@ async def test_exchange_code_apple_redirect(mock_async_client_cls):
     mock_async_client_cls.return_value = mock_ctx
 
     provider = _registry["apple"]
-    await _exchange_code(provider, "code", 49000, "apple")
+    with patch(
+        "account_hub.oauth.apple_jwt.generate_apple_client_secret",
+        return_value="fake-apple-jwt-secret",
+    ):
+        await _exchange_code(provider, "code", 49000, "apple")
 
     call_kwargs = mock_client.post.call_args
     post_data = call_kwargs.kwargs.get("data") or call_kwargs[1].get("data")
     assert post_data["redirect_uri"] == "https://dlopro.com/callback"
+    assert post_data["client_secret"] == "fake-apple-jwt-secret"
 
 
 # ---------------------------------------------------------------------------

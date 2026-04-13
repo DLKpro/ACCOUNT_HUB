@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import base64
+import hashlib
 import logging
 import secrets
 import uuid
@@ -8,6 +10,7 @@ from datetime import datetime, timedelta, timezone
 from urllib.parse import urlencode
 
 import httpx
+from jose import jwt as jose_jwt
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -78,11 +81,21 @@ async def initiate_oauth(
     else:
         state = secrets.token_hex(32)
 
+    # Generate PKCE code verifier for auth code flows
+    code_verifier = None
+    nonce = None
+    if provider.flow_type == FlowType.LOOPBACK:
+        code_verifier = secrets.token_urlsafe(64)
+        if "openid" in provider.scopes:
+            nonce = secrets.token_urlsafe(32)
+
     oauth_state = OAuthState(
         state=state,
         user_id=user_id,
         provider=provider_name,
         redirect_port=redirect_port,
+        code_verifier=code_verifier,
+        nonce=nonce,
         expires_at=datetime.now(timezone.utc) + timedelta(minutes=10),  # noqa: UP017
     )
     db.add(oauth_state)
@@ -94,14 +107,24 @@ async def initiate_oauth(
             redirect_uri = "https://dlopro.com/callback"
         else:
             redirect_uri = f"http://127.0.0.1:{redirect_port}/callback"
+
+        # PKCE S256 challenge
+        code_challenge = base64.urlsafe_b64encode(
+            hashlib.sha256(code_verifier.encode("ascii")).digest()
+        ).rstrip(b"=").decode("ascii")
+
         params = {
             "client_id": provider.client_id,
             "redirect_uri": redirect_uri,
             "response_type": "code",
             "scope": " ".join(provider.scopes),
             "state": state,
+            "code_challenge": code_challenge,
+            "code_challenge_method": "S256",
             **provider.extra_authorize_params,
         }
+        if nonce:
+            params["nonce"] = nonce
         auth_url = f"{provider.authorize_url}?{urlencode(params)}"
         return InitiateResult(auth_url=auth_url, state=state)
 
@@ -163,6 +186,8 @@ async def handle_oauth_callback(
         raise InvalidStateError("Invalid or expired OAuth state")
 
     redirect_port = oauth_state.redirect_port
+    code_verifier = oauth_state.code_verifier
+    stored_nonce = oauth_state.nonce
 
     # Delete the state (single-use)
     await db.execute(delete(OAuthState).where(OAuthState.id == oauth_state.id))
@@ -170,11 +195,25 @@ async def handle_oauth_callback(
     provider = get_provider(provider_name)
 
     # Exchange code for tokens
-    token_data = await _exchange_code(provider, code, redirect_port, provider_name)
+    token_data = await _exchange_code(provider, code, redirect_port, provider_name, code_verifier=code_verifier)
+
+    # Validate OIDC nonce if present
+    if stored_nonce and "id_token" in token_data:
+        id_claims = jose_jwt.get_unverified_claims(token_data["id_token"])
+        if id_claims.get("nonce") != stored_nonce:
+            raise InvalidStateError("Nonce mismatch in ID token")
 
     # Get user info (email address)
     access_token = token_data["access_token"]
-    user_info = await _get_user_info(provider, access_token)
+    if provider_name == "apple":
+        # Apple has no userinfo endpoint; user info is in the id_token JWT
+        id_token_raw = token_data.get("id_token")
+        if not id_token_raw:
+            raise UserInfoFailedError("Apple did not return an id_token")
+        claims = jose_jwt.get_unverified_claims(id_token_raw)
+        user_info = {"email": claims.get("email"), "sub": claims.get("sub")}
+    else:
+        user_info = await _get_user_info(provider, access_token)
 
     email_address = user_info.get("email")
     if not email_address:
@@ -312,7 +351,7 @@ async def _create_linked_email(
 
 async def _exchange_code(
     provider: OAuthProviderConfig, code: str, redirect_port: int | None,
-    provider_name: str = "",
+    provider_name: str = "", *, code_verifier: str | None = None,
 ) -> dict:
     """Exchange an authorization code for tokens."""
     if provider_name == "apple":
@@ -322,18 +361,29 @@ async def _exchange_code(
     else:
         redirect_uri = ""
 
-    async with httpx.AsyncClient() as client:
-        resp = await client.post(
-            provider.token_url,
-            data={
-                "client_id": provider.client_id,
-                "client_secret": provider.client_secret,
-                "code": code,
-                "grant_type": "authorization_code",
-                "redirect_uri": redirect_uri,
-                **provider.extra_token_params,
-            },
+    if provider_name == "apple":
+        from account_hub.config import settings
+        from account_hub.oauth.apple_jwt import generate_apple_client_secret
+        client_secret = generate_apple_client_secret(
+            settings.apple_team_id, settings.apple_client_id,
+            settings.apple_key_id, settings.apple_private_key_path,
         )
+    else:
+        client_secret = provider.client_secret
+
+    data = {
+        "client_id": provider.client_id,
+        "client_secret": client_secret,
+        "code": code,
+        "grant_type": "authorization_code",
+        "redirect_uri": redirect_uri,
+        **provider.extra_token_params,
+    }
+    if code_verifier:
+        data["code_verifier"] = code_verifier
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(provider.token_url, data=data)
 
     if resp.status_code != 200:
         logger.error("Token exchange failed: %d %s", resp.status_code, resp.text)

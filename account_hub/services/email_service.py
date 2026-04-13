@@ -70,13 +70,13 @@ async def unlink_email(db: AsyncSession, user_id: uuid.UUID, email_id: uuid.UUID
     email = await get_linked_email(db, user_id, email_id)
 
     # Best-effort token revocation
-    await _try_revoke_token(email)
+    await try_revoke_token(email)
 
     await db.execute(delete(LinkedEmail).where(LinkedEmail.id == email_id))
     await db.commit()
 
 
-async def _try_revoke_token(email: LinkedEmail) -> None:
+async def try_revoke_token(email: LinkedEmail) -> None:
     """Attempt to revoke the OAuth token with the provider. Failures are silently ignored."""
     if not email.access_token_enc:
         return
@@ -86,16 +86,38 @@ async def _try_revoke_token(email: LinkedEmail) -> None:
     except ValueError:
         return
 
-    if not provider.revoke_url:
-        return
-
     try:
         access_token = decrypt_token(email.access_token_enc)
-        async with httpx.AsyncClient() as client:
-            await client.post(
-                provider.revoke_url,
-                data={"token": access_token},
-                timeout=10.0,
-            )
+        refresh_token = decrypt_token(email.refresh_token_enc) if email.refresh_token_enc else None
+
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            if email.provider == "apple":
+                from account_hub.config import settings
+                from account_hub.oauth.apple_jwt import generate_apple_client_secret
+                client_secret = generate_apple_client_secret(
+                    settings.apple_team_id, settings.apple_client_id,
+                    settings.apple_key_id, settings.apple_private_key_path,
+                )
+                token_to_revoke = refresh_token or access_token
+                hint = "refresh_token" if refresh_token else "access_token"
+                await client.post(
+                    provider.revoke_url,
+                    data={
+                        "client_id": settings.apple_client_id,
+                        "client_secret": client_secret,
+                        "token": token_to_revoke,
+                        "token_type_hint": hint,
+                    },
+                )
+            elif email.provider == "meta":
+                await client.delete(
+                    "https://graph.facebook.com/v19.0/me/permissions",
+                    headers={"Authorization": f"Bearer {access_token}"},
+                )
+            elif provider.revoke_url:
+                await client.post(
+                    provider.revoke_url,
+                    data={"token": access_token},
+                )
     except Exception:
         pass  # Best-effort — don't fail the unlink if revocation fails

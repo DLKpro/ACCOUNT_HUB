@@ -18,7 +18,7 @@ def test_settings_from_env(monkeypatch):
 
 
 def test_oauth_defaults_empty():
-    s = Settings()
+    s = Settings(_env_file=None)
     assert s.google_client_id == ""
     assert s.microsoft_client_id == ""
     assert s.apple_client_id == ""

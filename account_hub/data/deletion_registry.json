@@ -1,0 +1,236 @@
+{
+  "Google Account": {
+    "deletion_url": "https://myaccount.google.com/delete-services-or-account",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Go to Google Account settings to delete individual services or the entire account."
+  },
+  "Microsoft Account": {
+    "deletion_url": "https://account.live.com/closeaccount.aspx",
+    "difficulty": "medium",
+    "method": "web",
+    "notes": "Account is deactivated for 60 days before permanent deletion. Cancel subscriptions first."
+  },
+  "Apple ID": {
+    "deletion_url": "https://privacy.apple.com/",
+    "difficulty": "medium",
+    "method": "web",
+    "notes": "Use Apple's Data and Privacy portal. All associated data will be deleted."
+  },
+  "Facebook": {
+    "deletion_url": "https://www.facebook.com/help/delete_account",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Account is deactivated for 30 days before permanent deletion."
+  },
+  "Twitter": {
+    "deletion_url": "https://twitter.com/settings/deactivate",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Deactivation page. Account deleted permanently after 30 days."
+  },
+  "LinkedIn": {
+    "deletion_url": "https://www.linkedin.com/psettings/account-management",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Close account from Account Management in settings."
+  },
+  "Instagram": {
+    "deletion_url": "https://www.instagram.com/accounts/remove/request/permanent/",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Permanently delete or temporarily deactivate."
+  },
+  "Adobe": {
+    "deletion_url": "https://accounts.adobe.com/privacy/data-management",
+    "difficulty": "medium",
+    "method": "web",
+    "notes": "Requires cancelling active subscriptions first."
+  },
+  "Spotify": {
+    "deletion_url": "https://support.spotify.com/us/close-account/",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Close account from the support page. Cancel Premium first."
+  },
+  "Amazon": {
+    "deletion_url": "https://www.amazon.com/privacy/data-deletion",
+    "difficulty": "hard",
+    "method": "web",
+    "notes": "Must contact support or use the data deletion request page."
+  },
+  "Dropbox": {
+    "deletion_url": "https://www.dropbox.com/account/delete",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Delete account from settings. Files are retained for recovery period."
+  },
+  "Reddit": {
+    "deletion_url": "https://www.reddit.com/prefs/deactivate/",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Account is permanently deleted. Posts remain but are disassociated."
+  },
+  "GitHub": {
+    "deletion_url": "https://github.com/settings/admin",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Delete account from Settings > Account. Transfer repos first."
+  },
+  "Netflix": {
+    "deletion_url": "https://www.netflix.com/cancelplan",
+    "difficulty": "medium",
+    "method": "web",
+    "notes": "Cancel membership first, then account is auto-deleted after 10 months."
+  },
+  "Slack": {
+    "deletion_url": "https://slack.com/help/articles/203953146",
+    "difficulty": "medium",
+    "method": "web",
+    "notes": "Individual workspaces must be left. Full account deletion via Slack support."
+  },
+  "Pinterest": {
+    "deletion_url": "https://www.pinterest.com/settings/privacy",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Deactivate or delete from Privacy settings."
+  },
+  "TikTok": {
+    "deletion_url": "https://support.tiktok.com/en/account-and-privacy/deleting-an-account",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Delete from Settings > Account > Delete Account. 30-day grace period."
+  },
+  "Snapchat": {
+    "deletion_url": "https://accounts.snapchat.com/accounts/delete_account",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Account deactivated for 30 days, then permanently deleted."
+  },
+  "Yahoo": {
+    "deletion_url": "https://login.yahoo.com/account/delete-user",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Account and all associated data permanently deleted after 40 days."
+  },
+  "Twitch": {
+    "deletion_url": "https://www.twitch.tv/settings/profile",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Disable or delete account from profile settings."
+  },
+  "Discord": {
+    "deletion_url": "https://support.discord.com/hc/en-us/articles/212500837",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Settings > My Account > Delete Account. Transfer server ownership first."
+  },
+  "Zoom": {
+    "deletion_url": "https://zoom.us/account/setting",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Profile > Account Management > Terminate My Account."
+  },
+  "Notion": {
+    "deletion_url": "https://www.notion.so/my-account",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Settings > My Account > Delete my account."
+  },
+  "Figma": {
+    "deletion_url": "https://www.figma.com/settings",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Account Settings > Delete Account."
+  },
+  "Canva": {
+    "deletion_url": "https://www.canva.com/settings/account",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Account Settings > Delete Account."
+  },
+  "Evernote": {
+    "deletion_url": "https://www.evernote.com/secure/SecuritySettings.action",
+    "difficulty": "medium",
+    "method": "web",
+    "notes": "Deactivation page in settings. Data retained for a limited time."
+  },
+  "Trello": {
+    "deletion_url": "https://trello.com/your/account",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Account > Delete Account. Boards and cards are permanently removed."
+  },
+  "Tumblr": {
+    "deletion_url": "https://www.tumblr.com/settings/account",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Delete account from account settings."
+  },
+  "Quora": {
+    "deletion_url": "https://www.quora.com/settings",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Privacy Settings > Delete Account. Content may remain anonymized."
+  },
+  "eBay": {
+    "deletion_url": "https://www.ebay.com/help/account/close-account/closing-your-ebay-account",
+    "difficulty": "medium",
+    "method": "web",
+    "notes": "Resolve outstanding transactions first. Account closed via help page."
+  },
+  "PayPal": {
+    "deletion_url": "https://www.paypal.com/myaccount/settings/",
+    "difficulty": "medium",
+    "method": "web",
+    "notes": "Withdraw balance and remove linked accounts first. Close in Settings."
+  },
+  "Uber": {
+    "deletion_url": "https://help.uber.com/riders/article/delete-my-uber-account",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Delete from Privacy Settings in the app or web."
+  },
+  "Airbnb": {
+    "deletion_url": "https://www.airbnb.com/account-settings/personal-info",
+    "difficulty": "medium",
+    "method": "web",
+    "notes": "Cancel reservations and resolve pending transactions first."
+  },
+  "Steam": {
+    "deletion_url": "https://help.steampowered.com/en/wizard/HelpDeleteAccount",
+    "difficulty": "hard",
+    "method": "web",
+    "notes": "Account deletion request via support. 30-day waiting period. Games are lost."
+  },
+  "Epic Games": {
+    "deletion_url": "https://www.epicgames.com/account/personal",
+    "difficulty": "medium",
+    "method": "web",
+    "notes": "Request deletion from account settings. 14-day waiting period."
+  },
+  "Gravatar": {
+    "deletion_url": "https://gravatar.com/profiles/edit",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Delete profile from Gravatar settings. Linked to WordPress.com account."
+  },
+  "WordPress.com": {
+    "deletion_url": "https://wordpress.com/me/account",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Close account from Me > Account Settings. Blogs are deleted."
+  },
+  "Mailchimp": {
+    "deletion_url": "https://mailchimp.com/help/close-account/",
+    "difficulty": "medium",
+    "method": "web",
+    "notes": "Pause or delete account from Account settings. Data is permanently removed."
+  },
+  "Shopify": {
+    "deletion_url": "https://help.shopify.com/en/manual/your-account/managing-account/close-store",
+    "difficulty": "medium",
+    "method": "web",
+    "notes": "Close store from Settings > Plan. Staff account remains but store is deactivated."
+  }
+}

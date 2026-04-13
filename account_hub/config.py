@@ -12,7 +12,7 @@ LOCKOUT_DURATION_MINUTES = 15
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     # Database
     database_url: str = "postgresql+asyncpg://user:password@localhost:5432/accounthub"

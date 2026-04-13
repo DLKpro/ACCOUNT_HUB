@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import uuid
 from datetime import datetime, timezone
 
@@ -12,6 +13,8 @@ from account_hub.discovery.base import BaseScanner, DiscoveredAccountResult
 from account_hub.discovery.gravatar import GravatarScanner
 from account_hub.discovery.hibp import HIBPBreachScanner
 from account_hub.discovery.oauth_profile import OAuthProfileScanner
+
+logger = logging.getLogger("account_hub.discovery")
 
 
 class DiscoveryServiceError(Exception):
@@ -60,9 +63,15 @@ async def start_scan(db: AsyncSession, user_id: uuid.UUID) -> ScanSession:
         await db.commit()
         return session
 
-    # Run scanners
+    # Run scanners (skip emails with expired OAuth tokens)
     all_results: list[DiscoveredAccountResult] = []
     for email in emails:
+        if email.token_expires_at and email.token_expires_at < datetime.now(timezone.utc):  # noqa: UP017
+            logger.warning(
+                "Skipping email %s: OAuth token expired at %s",
+                email.email_address, email.token_expires_at,
+            )
+            continue
         scanners = _get_scanners(email.provider)
         tasks = [scanner.scan(email.email_address) for scanner in scanners]
         scanner_results = await asyncio.gather(*tasks, return_exceptions=True)

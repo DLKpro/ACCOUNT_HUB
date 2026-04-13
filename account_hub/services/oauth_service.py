@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import secrets
 import uuid
 from dataclasses import dataclass
@@ -13,6 +14,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from account_hub.db.models import LinkedEmail, OAuthState
 from account_hub.oauth.providers import FlowType, OAuthProviderConfig, get_provider
 from account_hub.security.encryption import encrypt_token
+
+security_logger = logging.getLogger("account_hub.security")
+logger = logging.getLogger("account_hub.oauth")
 
 
 class OAuthServiceError(Exception):
@@ -124,9 +128,8 @@ async def _start_device_code_flow(
         )
 
     if resp.status_code != 200:
-        raise TokenExchangeFailedError(
-            f"Device code request failed: {resp.status_code} {resp.text}"
-        )
+        logger.error("Device code request failed: %d %s", resp.status_code, resp.text)
+        raise TokenExchangeFailedError("Device code request failed")
 
     data = resp.json()
     return InitiateResult(
@@ -213,6 +216,11 @@ async def handle_oauth_callback(
     await db.commit()
     await db.refresh(linked_email)
 
+    security_logger.info(
+        "SECURITY_EVENT: email_linked user=%s provider=%s email=%s",
+        user_id, provider_name, email_address,
+    )
+
     return LinkResult(
         linked_email_id=linked_email.id,
         email_address=email_address,
@@ -246,7 +254,8 @@ async def poll_device_code(
             raise DeviceCodePendingError("User has not yet authorized")
         if error == "slow_down":
             raise DeviceCodePendingError("Slow down — increase polling interval")
-        raise TokenExchangeFailedError(f"Device code poll failed: {resp.status_code} {resp.text}")
+        logger.error("Device code poll failed: %d %s", resp.status_code, resp.text)
+        raise TokenExchangeFailedError("Device code poll failed")
 
     token_data = resp.json()
     access_token = token_data["access_token"]
@@ -338,7 +347,8 @@ async def _exchange_code(
         )
 
     if resp.status_code != 200:
-        raise TokenExchangeFailedError(f"Token exchange failed: {resp.status_code} {resp.text}")
+        logger.error("Token exchange failed: %d %s", resp.status_code, resp.text)
+        raise TokenExchangeFailedError("Token exchange failed")
 
     return resp.json()
 
@@ -355,6 +365,7 @@ async def _get_user_info(provider: OAuthProviderConfig, access_token: str) -> di
         )
 
     if resp.status_code != 200:
-        raise UserInfoFailedError(f"Userinfo request failed: {resp.status_code} {resp.text}")
+        logger.error("Userinfo request failed: %d %s", resp.status_code, resp.text)
+        raise UserInfoFailedError("Failed to retrieve user information from provider")
 
     return resp.json()

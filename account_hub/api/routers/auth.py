@@ -8,8 +8,10 @@ from account_hub.api.dependencies import get_current_user, get_db
 from account_hub.api.limiter import limiter
 from account_hub.db.models import User
 from account_hub.services.user_service import (
+    AccountLockedError,
     InvalidCredentialsError,
     InvalidTokenError,
+    PasswordTooShortError,
     UsernameInvalidError,
     UsernameTakenError,
     authenticate_user,
@@ -72,7 +74,7 @@ class UserResponse(BaseModel):
 async def register(request: Request, body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     try:
         user, tokens = await register_user(db, body.username, body.password)
-    except UsernameInvalidError as e:
+    except (UsernameInvalidError, PasswordTooShortError) as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except UsernameTakenError as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
@@ -90,6 +92,8 @@ async def register(request: Request, body: RegisterRequest, db: AsyncSession = D
 async def login(request: Request, body: LoginRequest, db: AsyncSession = Depends(get_db)):
     try:
         _user, tokens = await authenticate_user(db, body.username, body.password)
+    except AccountLockedError as e:
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=str(e))
     except InvalidCredentialsError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
@@ -100,7 +104,8 @@ async def login(request: Request, body: LoginRequest, db: AsyncSession = Depends
 
 
 @router.post("/refresh", response_model=TokenResponse)
-async def refresh(body: RefreshRequest, db: AsyncSession = Depends(get_db)):
+@limiter.limit("10/minute")
+async def refresh(request: Request, body: RefreshRequest, db: AsyncSession = Depends(get_db)):
     try:
         tokens = await refresh_tokens(db, body.refresh_token)
     except InvalidTokenError as e:
@@ -124,7 +129,9 @@ async def me(current_user: User = Depends(get_current_user)):
 
 
 @router.delete("/account", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("3/minute")
 async def delete_my_account(
+    request: Request,
     body: DeleteAccountRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

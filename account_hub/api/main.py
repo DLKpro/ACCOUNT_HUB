@@ -58,15 +58,20 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+        allow_headers=["Content-Type", "Authorization"],
     )
 
-    # Request logging middleware
+    # Security headers + request logging middleware
     @app.middleware("http")
-    async def log_requests(request: Request, call_next):
+    async def security_and_logging(request: Request, call_next):
         logger.info("%s %s", request.method, request.url.path)
         response: Response = await call_next(request)
+        # Security headers
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
         logger.info("%s %s -> %s", request.method, request.url.path, response.status_code)
         return response
 

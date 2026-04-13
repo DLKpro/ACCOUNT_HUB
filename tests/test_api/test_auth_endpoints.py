@@ -26,7 +26,7 @@ async def test_register_success(client: AsyncClient):
 async def test_register_invalid_username(client: AsyncClient):
     resp = await client.post("/auth/register", json={
         "username": "ab",  # too short
-        "password": "pass",
+        "password": "testpass1",
     })
     assert resp.status_code == 400
 
@@ -35,11 +35,11 @@ async def test_register_invalid_username(client: AsyncClient):
 async def test_register_duplicate_username(client: AsyncClient):
     await client.post("/auth/register", json={
         "username": "dupeuser",
-        "password": "pass1",
+        "password": "testpass1",
     })
     resp = await client.post("/auth/register", json={
         "username": "dupeuser",
-        "password": "pass2",
+        "password": "testpass2",
     })
     assert resp.status_code == 409
 
@@ -66,11 +66,11 @@ async def test_login_success(client: AsyncClient):
 async def test_login_wrong_password(client: AsyncClient):
     await client.post("/auth/register", json={
         "username": "wrongpwuser",
-        "password": "correct",
+        "password": "correctpass",
     })
     resp = await client.post("/auth/login", json={
         "username": "wrongpwuser",
-        "password": "incorrect",
+        "password": "wrongpass1",
     })
     assert resp.status_code == 401
 
@@ -79,7 +79,7 @@ async def test_login_wrong_password(client: AsyncClient):
 async def test_login_nonexistent_user(client: AsyncClient):
     resp = await client.post("/auth/login", json={
         "username": "nobody_here",
-        "password": "anything",
+        "password": "anything1",
     })
     assert resp.status_code == 401
 
@@ -88,7 +88,7 @@ async def test_login_nonexistent_user(client: AsyncClient):
 async def test_me_with_valid_token(client: AsyncClient):
     reg = await client.post("/auth/register", json={
         "username": "meuser",
-        "password": "pass",
+        "password": "testpass1",
     })
     token = reg.json()["access_token"]
     resp = await client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
@@ -114,7 +114,7 @@ async def test_me_with_invalid_token(client: AsyncClient):
 async def test_refresh_returns_new_tokens(client: AsyncClient):
     reg = await client.post("/auth/register", json={
         "username": "refreshuser",
-        "password": "pass",
+        "password": "testpass1",
     })
     refresh_token = reg.json()["refresh_token"]
 
@@ -134,7 +134,7 @@ async def test_refresh_returns_new_tokens(client: AsyncClient):
 async def test_refresh_with_access_token_fails(client: AsyncClient):
     reg = await client.post("/auth/register", json={
         "username": "badrefreshuser",
-        "password": "pass",
+        "password": "testpass1",
     })
     access_token = reg.json()["access_token"]
     resp = await client.post("/auth/refresh", json={"refresh_token": access_token})
@@ -151,7 +151,7 @@ async def test_refresh_with_garbage_fails(client: AsyncClient):
 async def test_delete_account(client: AsyncClient):
     reg = await client.post("/auth/register", json={
         "username": "deleteuser",
-        "password": "pass",
+        "password": "testpass1",
     })
     token = reg.json()["access_token"]
 
@@ -159,7 +159,7 @@ async def test_delete_account(client: AsyncClient):
     resp = await client.request(
         "DELETE", "/auth/account",
         headers={"Authorization": f"Bearer {token}"},
-        json={"password": "pass"},
+        json={"password": "testpass1"},
     )
     assert resp.status_code == 204
 
@@ -172,14 +172,14 @@ async def test_delete_account(client: AsyncClient):
 async def test_delete_account_wrong_password(client: AsyncClient):
     reg = await client.post("/auth/register", json={
         "username": "nodelete2",
-        "password": "correct",
+        "password": "correctpass",
     })
     token = reg.json()["access_token"]
 
     resp = await client.request(
         "DELETE", "/auth/account",
         headers={"Authorization": f"Bearer {token}"},
-        json={"password": "wrong"},
+        json={"password": "wrongpass1"},
     )
     assert resp.status_code == 403
 
@@ -190,7 +190,7 @@ async def test_full_register_login_me_flow(client: AsyncClient):
     # Register
     reg = await client.post("/auth/register", json={
         "username": "fullflowuser",
-        "password": "flowpass",
+        "password": "flowpass1",
     })
     assert reg.status_code == 201
     reg_data = reg.json()
@@ -198,7 +198,7 @@ async def test_full_register_login_me_flow(client: AsyncClient):
     # Login with same credentials
     login_resp = await client.post("/auth/login", json={
         "username": "fullflowuser",
-        "password": "flowpass",
+        "password": "flowpass1",
     })
     assert login_resp.status_code == 200
     login_token = login_resp.json()["access_token"]
@@ -219,13 +219,13 @@ async def test_register_login_refresh_me_flow(client: AsyncClient):
     # Register
     await client.post("/auth/register", json={
         "username": "refreshflowuser",
-        "password": "pass",
+        "password": "testpass1",
     })
 
     # Login
     login_resp = await client.post("/auth/login", json={
         "username": "refreshflowuser",
-        "password": "pass",
+        "password": "testpass1",
     })
     refresh_token = login_resp.json()["refresh_token"]
 

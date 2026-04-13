@@ -15,7 +15,7 @@ from account_hub.security.encryption import encrypt_token
 
 async def _register(client: AsyncClient, username: str = None) -> str:
     uname = username or f"user_{uuid.uuid4().hex[:8]}"
-    resp = await client.post("/auth/register", json={"username": uname, "password": "pass"})
+    resp = await client.post("/auth/register", json={"username": uname, "password": "testpass1"})
     assert resp.status_code == 201
     return resp.json()["access_token"]
 
@@ -251,7 +251,7 @@ async def test_full_closure_lifecycle(client: AsyncClient, test_engine):
     # Phase 2+5: Delete entire account (cascading)
     delete = await client.request(
         "DELETE", "/auth/account",
-        headers=_auth(token), json={"password": "pass"},
+        headers=_auth(token), json={"password": "testpass1"},
     )
     assert delete.status_code == 204
 

@@ -68,7 +68,11 @@ async def initiate_oauth(
     """Start an OAuth flow. Returns auth URL (loopback) or device code info."""
     provider = get_provider(provider_name)
 
-    state = secrets.token_hex(32)
+    # For Apple, encode the local port in state so the relay worker knows where to redirect
+    if provider_name == "apple" and redirect_port:
+        state = f"{secrets.token_hex(32)}:{redirect_port}"
+    else:
+        state = secrets.token_hex(32)
 
     oauth_state = OAuthState(
         state=state,
@@ -81,7 +85,11 @@ async def initiate_oauth(
     await db.commit()
 
     if provider.flow_type == FlowType.LOOPBACK:
-        redirect_uri = f"http://127.0.0.1:{redirect_port}/callback"
+        # Apple uses dlopro.com relay; others use localhost directly
+        if provider_name == "apple":
+            redirect_uri = "https://dlopro.com/callback"
+        else:
+            redirect_uri = f"http://127.0.0.1:{redirect_port}/callback"
         params = {
             "client_id": provider.client_id,
             "redirect_uri": redirect_uri,
@@ -159,7 +167,7 @@ async def handle_oauth_callback(
     provider = get_provider(provider_name)
 
     # Exchange code for tokens
-    token_data = await _exchange_code(provider, code, redirect_port)
+    token_data = await _exchange_code(provider, code, redirect_port, provider_name)
 
     # Get user info (email address)
     access_token = token_data["access_token"]
@@ -305,10 +313,16 @@ async def poll_device_code(
 
 
 async def _exchange_code(
-    provider: OAuthProviderConfig, code: str, redirect_port: int | None
+    provider: OAuthProviderConfig, code: str, redirect_port: int | None,
+    provider_name: str = "",
 ) -> dict:
     """Exchange an authorization code for tokens."""
-    redirect_uri = f"http://127.0.0.1:{redirect_port}/callback" if redirect_port else ""
+    if provider_name == "apple":
+        redirect_uri = "https://dlopro.com/callback"
+    elif redirect_port:
+        redirect_uri = f"http://127.0.0.1:{redirect_port}/callback"
+    else:
+        redirect_uri = ""
 
     async with httpx.AsyncClient() as client:
         resp = await client.post(

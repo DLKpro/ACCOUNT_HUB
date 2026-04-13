@@ -6,8 +6,16 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import httpx
+import typer
+from rich.console import Console as _Console
 
 from account_hub.config import settings
+
+
+def handle_api_error(resp: httpx.Response, console: _Console) -> None:
+    """Print a generic API error message and exit."""
+    console.print(f"[red]Error: {resp.status_code} — {resp.text}[/red]")
+    raise typer.Exit(1)
 
 CREDENTIALS_DIR = Path.home() / ".accounthub"
 CREDENTIALS_FILE = CREDENTIALS_DIR / "credentials.json"

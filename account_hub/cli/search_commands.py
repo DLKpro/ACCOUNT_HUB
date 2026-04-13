@@ -6,7 +6,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from account_hub.cli.helpers import get_client
+from account_hub.cli.helpers import get_client, handle_api_error
 
 search_app = typer.Typer(no_args_is_help=True)
 console = Console()
@@ -19,8 +19,7 @@ def run_search():
         resp = client.post("/search")
 
     if resp.status_code != 201:
-        console.print(f"[red]Error: {resp.status_code} — {resp.text}[/red]")
-        raise typer.Exit(1)
+        handle_api_error(resp, console)
 
     data = resp.json()
     session_id = data["scan_session_id"]
@@ -57,8 +56,7 @@ def scan_history(
         resp = client.get("/search/history", params={"limit": limit})
 
     if resp.status_code != 200:
-        console.print(f"[red]Error: {resp.status_code} — {resp.text}[/red]")
-        raise typer.Exit(1)
+        handle_api_error(resp, console)
 
     scans = resp.json()
     if not scans:
@@ -102,8 +100,7 @@ def export_results(
         resp = client.get(f"/search/{session_id}/export")
 
     if resp.status_code != 200:
-        console.print(f"[red]Error: {resp.status_code} — {resp.text}[/red]")
-        raise typer.Exit(1)
+        handle_api_error(resp, console)
 
     Path(output).write_text(resp.text)
     console.print(f"[green]Exported to {output}[/green]")
@@ -125,8 +122,7 @@ def _show_scan_results(session_id: str) -> None:
         resp = client.get(f"/search/{session_id}")
 
     if resp.status_code != 200:
-        console.print(f"[red]Error: {resp.status_code} — {resp.text}[/red]")
-        raise typer.Exit(1)
+        handle_api_error(resp, console)
 
     data = resp.json()
     results = data.get("results", [])

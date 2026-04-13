@@ -182,43 +182,9 @@ async def handle_oauth_callback(
 
     provider_user_id = user_info.get("sub") or user_info.get("id")
 
-    # Check if already linked
-    existing = await db.execute(
-        select(LinkedEmail).where(
-            LinkedEmail.user_id == user_id,
-            LinkedEmail.email_address == email_address,
-        )
-    )
-    if existing.scalar_one_or_none() is not None:
-        raise EmailAlreadyLinkedError(f"{email_address} is already linked to your account")
-
-    # Encrypt and store tokens
-    refresh_token = token_data.get("refresh_token")
-    expires_in = token_data.get("expires_in")
-    token_expires_at = None
-    if expires_in:
-        token_expires_at = datetime.now(timezone.utc) + timedelta(  # noqa: UP017
-            seconds=int(expires_in)
-        )
-
-    linked_email = LinkedEmail(
-        user_id=user_id,
-        email_address=email_address,
-        provider=provider_name,
-        provider_user_id=str(provider_user_id) if provider_user_id else None,
-        access_token_enc=encrypt_token(access_token),
-        refresh_token_enc=encrypt_token(refresh_token) if refresh_token else None,
-        token_expires_at=token_expires_at,
-        scopes=" ".join(provider.scopes),
-        is_verified=True,
-    )
-    db.add(linked_email)
-    await db.commit()
-    await db.refresh(linked_email)
-
-    security_logger.info(
-        "SECURITY_EVENT: email_linked user=%s provider=%s email=%s",
-        user_id, provider_name, email_address,
+    linked_email = await _create_linked_email(
+        db, user_id, email_address, provider_name, provider_user_id,
+        token_data, provider.scopes,
     )
 
     return LinkResult(
@@ -272,7 +238,37 @@ async def poll_device_code(
 
     provider_user_id = user_info.get("id")
 
-    # Check if already linked
+    linked_email = await _create_linked_email(
+        db, user_id, email_address, provider_name, provider_user_id,
+        token_data, provider.scopes,
+    )
+
+    # Clean up any remaining oauth_states for this user+provider
+    await db.execute(
+        delete(OAuthState).where(
+            OAuthState.user_id == user_id,
+            OAuthState.provider == provider_name,
+        )
+    )
+    await db.commit()
+
+    return LinkResult(
+        linked_email_id=linked_email.id,
+        email_address=email_address,
+        provider=provider_name,
+    )
+
+
+async def _create_linked_email(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    email_address: str,
+    provider_name: str,
+    provider_user_id: str | None,
+    token_data: dict,
+    scopes: list[str],
+) -> LinkedEmail:
+    """Check for duplicates, encrypt tokens, persist and return a LinkedEmail."""
     existing = await db.execute(
         select(LinkedEmail).where(
             LinkedEmail.user_id == user_id,
@@ -282,6 +278,7 @@ async def poll_device_code(
     if existing.scalar_one_or_none() is not None:
         raise EmailAlreadyLinkedError(f"{email_address} is already linked to your account")
 
+    access_token = token_data["access_token"]
     refresh_token = token_data.get("refresh_token")
     expires_in = token_data.get("expires_in")
     token_expires_at = None
@@ -298,27 +295,19 @@ async def poll_device_code(
         access_token_enc=encrypt_token(access_token),
         refresh_token_enc=encrypt_token(refresh_token) if refresh_token else None,
         token_expires_at=token_expires_at,
-        scopes=" ".join(provider.scopes),
+        scopes=" ".join(scopes),
         is_verified=True,
     )
     db.add(linked_email)
     await db.commit()
     await db.refresh(linked_email)
 
-    # Clean up any remaining oauth_states for this user+provider
-    await db.execute(
-        delete(OAuthState).where(
-            OAuthState.user_id == user_id,
-            OAuthState.provider == provider_name,
-        )
+    security_logger.info(
+        "SECURITY_EVENT: email_linked user=%s provider=%s email=%s",
+        user_id, provider_name, email_address,
     )
-    await db.commit()
 
-    return LinkResult(
-        linked_email_id=linked_email.id,
-        email_address=email_address,
-        provider=provider_name,
-    )
+    return linked_email
 
 
 async def _exchange_code(

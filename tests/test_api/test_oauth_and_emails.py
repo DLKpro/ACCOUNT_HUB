@@ -43,18 +43,7 @@ def setup_test_provider():
     yield
 
 
-async def _register_and_get_token(client: AsyncClient, username: str = None) -> str:
-    """Helper: register a user and return the access token."""
-    uname = username or f"user_{uuid.uuid4().hex[:8]}"
-    resp = await client.post("/auth/register", json={
-        "username": uname, "password": "testpass1"
-    })
-    assert resp.status_code == 201
-    return resp.json()["access_token"]
-
-
-def _auth(token: str) -> dict:
-    return {"Authorization": f"Bearer {token}"}
+from tests.helpers import auth_headers, register_user
 
 
 # --- OAuth Initiate ---
@@ -62,10 +51,10 @@ def _auth(token: str) -> dict:
 
 @pytest.mark.asyncio
 async def test_initiate_returns_auth_url(client: AsyncClient):
-    token = await _register_and_get_token(client)
+    token = await register_user(client)
     resp = await client.post(
         "/oauth/initiate",
-        headers=_auth(token),
+        headers=auth_headers(token),
         json={"provider": "testprov", "redirect_port": 49000},
     )
     assert resp.status_code == 200
@@ -77,17 +66,17 @@ async def test_initiate_returns_auth_url(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_initiate_unknown_provider(client: AsyncClient):
-    token = await _register_and_get_token(client)
+    token = await register_user(client)
     resp = await client.post(
         "/oauth/initiate",
-        headers=_auth(token),
+        headers=auth_headers(token),
         json={"provider": "nonexistent", "redirect_port": 49000},
     )
     assert resp.status_code == 400
 
 
 @pytest.mark.asyncio
-async def test_initiate_requires_auth(client: AsyncClient):
+async def test_initiate_requiresauth_headers(client: AsyncClient):
     resp = await client.post(
         "/oauth/initiate",
         json={"provider": "testprov", "redirect_port": 49000},
@@ -100,10 +89,10 @@ async def test_initiate_requires_auth(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_callback_invalid_state(client: AsyncClient):
-    token = await _register_and_get_token(client)
+    token = await register_user(client)
     resp = await client.post(
         "/oauth/callback",
-        headers=_auth(token),
+        headers=auth_headers(token),
         json={"provider": "testprov", "code": "fake", "state": "bad-state"},
     )
     assert resp.status_code == 400
@@ -114,14 +103,14 @@ async def test_callback_invalid_state(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_list_emails_empty(client: AsyncClient):
-    token = await _register_and_get_token(client)
-    resp = await client.get("/emails", headers=_auth(token))
+    token = await register_user(client)
+    resp = await client.get("/emails", headers=auth_headers(token))
     assert resp.status_code == 200
     assert resp.json() == []
 
 
 @pytest.mark.asyncio
-async def test_list_emails_requires_auth(client: AsyncClient):
+async def test_list_emails_requiresauth_headers(client: AsyncClient):
     resp = await client.get("/emails")
     assert resp.status_code in (401, 403)
 
@@ -131,16 +120,16 @@ async def test_list_emails_requires_auth(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_delete_nonexistent_email(client: AsyncClient):
-    token = await _register_and_get_token(client)
+    token = await register_user(client)
     fake_id = str(uuid.uuid4())
-    resp = await client.delete(f"/emails/{fake_id}", headers=_auth(token))
+    resp = await client.delete(f"/emails/{fake_id}", headers=auth_headers(token))
     assert resp.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_delete_invalid_email_id(client: AsyncClient):
-    token = await _register_and_get_token(client)
-    resp = await client.delete("/emails/not-a-uuid", headers=_auth(token))
+    token = await register_user(client)
+    resp = await client.delete("/emails/not-a-uuid", headers=auth_headers(token))
     assert resp.status_code == 400
 
 
@@ -157,23 +146,23 @@ async def test_deleted_user_cannot_list_emails(client: AsyncClient):
 
     # Delete account
     await client.request("DELETE", "/auth/account",
-        headers=_auth(token), json={"password": "testpass1"})
+        headers=auth_headers(token), json={"password": "testpass1"})
 
     # Try to list emails with the now-invalid token
-    resp = await client.get("/emails", headers=_auth(token))
+    resp = await client.get("/emails", headers=auth_headers(token))
     assert resp.status_code == 401
 
 
 @pytest.mark.asyncio
 async def test_initiate_state_scoped_to_user(client: AsyncClient):
     """State created by one user should not work for another."""
-    token1 = await _register_and_get_token(client, "stateuser1")
-    token2 = await _register_and_get_token(client, "stateuser2")
+    token1 = await register_user(client, "stateuser1")
+    token2 = await register_user(client, "stateuser2")
 
     # User 1 initiates
     resp = await client.post(
         "/oauth/initiate",
-        headers=_auth(token1),
+        headers=auth_headers(token1),
         json={"provider": "testprov", "redirect_port": 49000},
     )
     state = resp.json()["state"]
@@ -181,7 +170,7 @@ async def test_initiate_state_scoped_to_user(client: AsyncClient):
     # User 2 tries to use user 1's state
     resp = await client.post(
         "/oauth/callback",
-        headers=_auth(token2),
+        headers=auth_headers(token2),
         json={"provider": "testprov", "code": "fake", "state": state},
     )
     assert resp.status_code == 400  # Invalid state for this user
@@ -205,14 +194,14 @@ async def test_full_auth_then_initiate_flow(client: AsyncClient):
     # Initiate OAuth
     init = await client.post(
         "/oauth/initiate",
-        headers=_auth(token),
+        headers=auth_headers(token),
         json={"provider": "testprov", "redirect_port": 49001},
     )
     assert init.status_code == 200
     assert init.json()["auth_url"] is not None
 
     # Verify email list is still empty (no callback completed)
-    emails = await client.get("/emails", headers=_auth(token))
+    emails = await client.get("/emails", headers=auth_headers(token))
     assert emails.status_code == 200
     assert emails.json() == []
 
@@ -223,7 +212,7 @@ async def test_full_auth_then_initiate_flow(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_initiate_device_code_returns_user_code(client: AsyncClient):
     """Initiating with a device code provider returns user_code and verification_uri."""
-    token = await _register_and_get_token(client)
+    token = await register_user(client)
 
     mock_result = InitiateResult(
         state="state-xyz",
@@ -239,7 +228,7 @@ async def test_initiate_device_code_returns_user_code(client: AsyncClient):
     ):
         resp = await client.post(
             "/oauth/initiate",
-            headers=_auth(token),
+            headers=auth_headers(token),
             json={"provider": "testprov"},
         )
 
@@ -256,7 +245,7 @@ async def test_initiate_device_code_returns_user_code(client: AsyncClient):
 async def test_initiate_service_error_returns_502(client: AsyncClient):
     """When initiate_oauth raises OAuthServiceError, endpoint returns 502."""
     from account_hub.services.oauth_service import OAuthServiceError
-    token = await _register_and_get_token(client)
+    token = await register_user(client)
 
     with patch(
         "account_hub.api.routers.oauth.initiate_oauth",
@@ -265,7 +254,7 @@ async def test_initiate_service_error_returns_502(client: AsyncClient):
     ):
         resp = await client.post(
             "/oauth/initiate",
-            headers=_auth(token),
+            headers=auth_headers(token),
             json={"provider": "testprov"},
         )
 
@@ -278,7 +267,7 @@ async def test_initiate_service_error_returns_502(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_poll_endpoint_pending(client: AsyncClient):
     """Poll returns 200 with status=pending when device code is still waiting."""
-    token = await _register_and_get_token(client)
+    token = await register_user(client)
 
     with patch(
         "account_hub.api.routers.oauth.poll_device_code",
@@ -287,7 +276,7 @@ async def test_poll_endpoint_pending(client: AsyncClient):
     ):
         resp = await client.post(
             "/oauth/poll",
-            headers=_auth(token),
+            headers=auth_headers(token),
             json={"provider": "testprov", "device_code": "dc_test"},
         )
 
@@ -298,7 +287,7 @@ async def test_poll_endpoint_pending(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_poll_endpoint_success(client: AsyncClient):
     """Poll returns 200 with linked email fields on success."""
-    token = await _register_and_get_token(client)
+    token = await register_user(client)
 
     link_result = LinkResult(
         linked_email_id=uuid.uuid4(),
@@ -313,7 +302,7 @@ async def test_poll_endpoint_success(client: AsyncClient):
     ):
         resp = await client.post(
             "/oauth/poll",
-            headers=_auth(token),
+            headers=auth_headers(token),
             json={"provider": "testprov", "device_code": "dc_test"},
         )
 
@@ -327,7 +316,7 @@ async def test_poll_endpoint_success(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_poll_endpoint_already_linked(client: AsyncClient):
     """Poll returns 409 when the email is already linked."""
-    token = await _register_and_get_token(client)
+    token = await register_user(client)
 
     with patch(
         "account_hub.api.routers.oauth.poll_device_code",
@@ -336,7 +325,7 @@ async def test_poll_endpoint_already_linked(client: AsyncClient):
     ):
         resp = await client.post(
             "/oauth/poll",
-            headers=_auth(token),
+            headers=auth_headers(token),
             json={"provider": "testprov", "device_code": "dc_test"},
         )
 
@@ -346,7 +335,7 @@ async def test_poll_endpoint_already_linked(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_poll_endpoint_token_failure(client: AsyncClient):
     """Poll returns 502 when the token exchange fails."""
-    token = await _register_and_get_token(client)
+    token = await register_user(client)
 
     with patch(
         "account_hub.api.routers.oauth.poll_device_code",
@@ -355,7 +344,7 @@ async def test_poll_endpoint_token_failure(client: AsyncClient):
     ):
         resp = await client.post(
             "/oauth/poll",
-            headers=_auth(token),
+            headers=auth_headers(token),
             json={"provider": "testprov", "device_code": "dc_test"},
         )
 
@@ -363,7 +352,7 @@ async def test_poll_endpoint_token_failure(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_poll_endpoint_requires_auth(client: AsyncClient):
+async def test_poll_endpoint_requiresauth_headers(client: AsyncClient):
     """Poll without auth header returns 401 or 403."""
     resp = await client.post(
         "/oauth/poll",
@@ -375,7 +364,7 @@ async def test_poll_endpoint_requires_auth(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_poll_endpoint_userinfo_failure(client: AsyncClient):
     """Poll returns 502 when userinfo retrieval fails."""
-    token = await _register_and_get_token(client)
+    token = await register_user(client)
 
     with patch(
         "account_hub.api.routers.oauth.poll_device_code",
@@ -384,7 +373,7 @@ async def test_poll_endpoint_userinfo_failure(client: AsyncClient):
     ):
         resp = await client.post(
             "/oauth/poll",
-            headers=_auth(token),
+            headers=auth_headers(token),
             json={"provider": "testprov", "device_code": "dc_test"},
         )
 
@@ -394,7 +383,7 @@ async def test_poll_endpoint_userinfo_failure(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_callback_token_exchange_failure(client: AsyncClient):
     """Callback returns 502 when token exchange fails."""
-    token = await _register_and_get_token(client)
+    token = await register_user(client)
 
     with patch(
         "account_hub.api.routers.oauth.handle_oauth_callback",
@@ -403,7 +392,7 @@ async def test_callback_token_exchange_failure(client: AsyncClient):
     ):
         resp = await client.post(
             "/oauth/callback",
-            headers=_auth(token),
+            headers=auth_headers(token),
             json={"provider": "testprov", "code": "authcode", "state": "somestate"},
         )
 
@@ -413,7 +402,7 @@ async def test_callback_token_exchange_failure(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_callback_email_already_linked(client: AsyncClient):
     """Callback returns 409 when email is already linked."""
-    token = await _register_and_get_token(client)
+    token = await register_user(client)
 
     with patch(
         "account_hub.api.routers.oauth.handle_oauth_callback",
@@ -422,7 +411,7 @@ async def test_callback_email_already_linked(client: AsyncClient):
     ):
         resp = await client.post(
             "/oauth/callback",
-            headers=_auth(token),
+            headers=auth_headers(token),
             json={"provider": "testprov", "code": "authcode", "state": "somestate"},
         )
 

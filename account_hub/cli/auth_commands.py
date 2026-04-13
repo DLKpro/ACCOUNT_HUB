@@ -5,6 +5,7 @@ from account_hub.cli.helpers import (
     clear_credentials,
     get_anon_client,
     get_client,
+    handle_api_error,
     save_credentials,
 )
 
@@ -34,8 +35,7 @@ def register(
         console.print(f"[red]{resp.json().get('detail', 'Invalid input')}[/red]")
         raise typer.Exit(1)
     else:
-        console.print(f"[red]Error: {resp.status_code} — {resp.text}[/red]")
-        raise typer.Exit(1)
+        handle_api_error(resp, console)
 
 
 @auth_app.command()
@@ -55,8 +55,7 @@ def login(
         console.print("[red]Invalid username or password.[/red]")
         raise typer.Exit(1)
     else:
-        console.print(f"[red]Error: {resp.status_code} — {resp.text}[/red]")
-        raise typer.Exit(1)
+        handle_api_error(resp, console)
 
 
 @auth_app.command()
@@ -75,8 +74,7 @@ def me():
         console.print("[red]Session expired. Run: accounthub auth login[/red]")
         raise typer.Exit(1)
     else:
-        console.print(f"[red]Error: {resp.status_code} — {resp.text}[/red]")
-        raise typer.Exit(1)
+        handle_api_error(resp, console)
 
 
 @auth_app.command()

@@ -4,7 +4,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from account_hub.cli.helpers import clear_credentials, get_client
+from account_hub.cli.helpers import clear_credentials, get_client, handle_api_error
 
 close_app = typer.Typer(no_args_is_help=True)
 console = Console()
@@ -17,8 +17,7 @@ def list_closure_requests():
         resp = client.get("/accounts/close-requests")
 
     if resp.status_code != 200:
-        console.print(f"[red]Error: {resp.status_code} — {resp.text}[/red]")
-        raise typer.Exit(1)
+        handle_api_error(resp, console)
 
     requests = resp.json()
     if not requests:
@@ -69,8 +68,7 @@ def request_closure(
         console.print("[red]Discovered account not found.[/red]")
         raise typer.Exit(1)
     else:
-        console.print(f"[red]Error: {resp.status_code} — {resp.text}[/red]")
-        raise typer.Exit(1)
+        handle_api_error(resp, console)
 
 
 @close_app.command("complete")
@@ -88,8 +86,7 @@ def mark_complete(
         console.print("[red]Closure request not found.[/red]")
         raise typer.Exit(1)
     else:
-        console.print(f"[red]Error: {resp.status_code} — {resp.text}[/red]")
-        raise typer.Exit(1)
+        handle_api_error(resp, console)
 
 
 @close_app.command("info")
@@ -101,8 +98,7 @@ def closure_info(
         resp = client.get(f"/accounts/close-info/{service_name}")
 
     if resp.status_code != 200:
-        console.print(f"[red]Error: {resp.status_code} — {resp.text}[/red]")
-        raise typer.Exit(1)
+        handle_api_error(resp, console)
 
     data = resp.json()
     console.print(f"[bold]{data['service_name']}[/bold]")
@@ -138,5 +134,4 @@ def delete_account(
         console.print("[red]Incorrect password.[/red]")
         raise typer.Exit(1)
     else:
-        console.print(f"[red]Error: {resp.status_code} — {resp.text}[/red]")
-        raise typer.Exit(1)
+        handle_api_error(resp, console)

@@ -10,7 +10,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from account_hub.cli.helpers import get_client
+from account_hub.cli.helpers import get_client, handle_api_error
 
 email_app = typer.Typer(no_args_is_help=True)
 console = Console()
@@ -119,9 +119,7 @@ def _loopback_flow(client, provider: str) -> None:
     elif resp.status_code == 409:
         console.print(f"[yellow]{resp.json().get('detail', 'Email already linked')}[/yellow]")
     else:
-        detail = resp.json().get("detail", resp.text)
-        console.print(f"[red]Error: {resp.status_code} — {detail}[/red]")
-        raise typer.Exit(1)
+        handle_api_error(resp, console)
 
 
 def _device_code_flow(client, provider: str) -> None:
@@ -160,8 +158,7 @@ def _device_code_flow(client, provider: str) -> None:
             console.print(f"[yellow]{resp.json().get('detail', 'Email already linked')}[/yellow]")
             return
         else:
-            console.print(f"[red]Error: {resp.status_code} — {resp.text}[/red]")
-            raise typer.Exit(1)
+            handle_api_error(resp, console)
 
     console.print("[red]Timed out waiting for authorization.[/red]")
     raise typer.Exit(1)
@@ -174,8 +171,7 @@ def list_emails():
         resp = client.get("/emails")
 
     if resp.status_code != 200:
-        console.print(f"[red]Error: {resp.status_code} — {resp.text}[/red]")
-        raise typer.Exit(1)
+        handle_api_error(resp, console)
 
     emails = resp.json()
     if not emails:
@@ -215,5 +211,4 @@ def unlink_email(
         console.print("[red]Linked email not found.[/red]")
         raise typer.Exit(1)
     else:
-        console.print(f"[red]Error: {resp.status_code} — {resp.text}[/red]")
-        raise typer.Exit(1)
+        handle_api_error(resp, console)

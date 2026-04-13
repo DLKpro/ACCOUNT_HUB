@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from account_hub.api.dependencies import get_current_user, get_db
 from account_hub.api.limiter import limiter
+from account_hub.api.utils import parse_uuid
 from account_hub.db.models import User
 from account_hub.services.email_service import (
     EmailNotFoundError,
@@ -50,12 +51,7 @@ async def delete_email(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    import uuid
-
-    try:
-        eid = uuid.UUID(email_id)
-    except ValueError:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid email ID")
+    eid = parse_uuid(email_id, "email ID")
 
     try:
         await unlink_email(db, current_user.id, eid)

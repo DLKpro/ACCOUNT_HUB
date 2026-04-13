@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from account_hub.api.dependencies import get_current_user, get_db
 from account_hub.api.limiter import limiter
+from account_hub.api.utils import parse_uuid
 from account_hub.db.models import User
 from account_hub.services.discovery_service import (
     ScanNotFoundError,
@@ -103,12 +104,7 @@ async def get_scan(
     db: AsyncSession = Depends(get_db),
 ):
     """Get scan session details and results."""
-    import uuid
-
-    try:
-        sid = uuid.UUID(session_id)
-    except ValueError:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid session ID")
+    sid = parse_uuid(session_id, "session ID")
 
     try:
         session = await get_scan_session(db, current_user.id, sid)
@@ -147,12 +143,7 @@ async def export_scan(
     db: AsyncSession = Depends(get_db),
 ):
     """Export scan results as CSV."""
-    import uuid
-
-    try:
-        sid = uuid.UUID(session_id)
-    except ValueError:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid session ID")
+    sid = parse_uuid(session_id, "session ID")
 
     try:
         await get_scan_session(db, current_user.id, sid)

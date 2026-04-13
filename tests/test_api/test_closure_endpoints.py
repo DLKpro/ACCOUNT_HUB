@@ -11,17 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from account_hub.db.models import LinkedEmail
 from account_hub.security.encryption import encrypt_token
-
-
-async def _register(client: AsyncClient, username: str = None) -> str:
-    uname = username or f"user_{uuid.uuid4().hex[:8]}"
-    resp = await client.post("/auth/register", json={"username": uname, "password": "testpass1"})
-    assert resp.status_code == 201
-    return resp.json()["access_token"]
-
-
-def _auth(token: str) -> dict:
-    return {"Authorization": f"Bearer {token}"}
+from tests.helpers import auth_headers, register_user
 
 
 async def _add_linked_email(test_engine, token: str, email: str, provider: str = "google"):
@@ -43,9 +33,9 @@ async def _add_linked_email(test_engine, token: str, email: str, provider: str =
 
 async def _scan_and_get_account_id(client: AsyncClient, token: str) -> str:
     """Run a scan and return the first discovered account ID."""
-    scan = await client.post("/search", headers=_auth(token))
+    scan = await client.post("/search", headers=auth_headers(token))
     sid = scan.json()["scan_session_id"]
-    detail = await client.get(f"/search/{sid}", headers=_auth(token))
+    detail = await client.get(f"/search/{sid}", headers=auth_headers(token))
     results = detail.json()["results"]
     assert len(results) > 0
     return results[0]["id"]
@@ -78,13 +68,13 @@ async def test_close_info_unknown_service(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_request_closure(client: AsyncClient, test_engine):
-    token = await _register(client, "closeuser1")
+    token = await register_user(client, "closeuser1")
     await _add_linked_email(test_engine, token, "close@gmail.com")
     account_id = await _scan_and_get_account_id(client, token)
 
     resp = await client.post(
         "/accounts/close",
-        headers=_auth(token),
+        headers=auth_headers(token),
         json={"discovered_account_id": account_id},
     )
     assert resp.status_code == 201
@@ -96,17 +86,17 @@ async def test_request_closure(client: AsyncClient, test_engine):
 
 @pytest.mark.asyncio
 async def test_request_closure_not_found(client: AsyncClient):
-    token = await _register(client)
+    token = await register_user(client)
     resp = await client.post(
         "/accounts/close",
-        headers=_auth(token),
+        headers=auth_headers(token),
         json={"discovered_account_id": str(uuid.uuid4())},
     )
     assert resp.status_code == 404
 
 
 @pytest.mark.asyncio
-async def test_request_closure_requires_auth(client: AsyncClient):
+async def test_request_closure_requiresauth_headers(client: AsyncClient):
     resp = await client.post(
         "/accounts/close",
         json={"discovered_account_id": str(uuid.uuid4())},
@@ -119,24 +109,24 @@ async def test_request_closure_requires_auth(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_list_closure_requests_empty(client: AsyncClient):
-    token = await _register(client)
-    resp = await client.get("/accounts/close-requests", headers=_auth(token))
+    token = await register_user(client)
+    resp = await client.get("/accounts/close-requests", headers=auth_headers(token))
     assert resp.status_code == 200
     assert resp.json() == []
 
 
 @pytest.mark.asyncio
 async def test_list_closure_requests_after_creating(client: AsyncClient, test_engine):
-    token = await _register(client, "listclose")
+    token = await register_user(client, "listclose")
     await _add_linked_email(test_engine, token, "list@gmail.com")
     account_id = await _scan_and_get_account_id(client, token)
 
     await client.post(
-        "/accounts/close", headers=_auth(token),
+        "/accounts/close", headers=auth_headers(token),
         json={"discovered_account_id": account_id},
     )
 
-    resp = await client.get("/accounts/close-requests", headers=_auth(token))
+    resp = await client.get("/accounts/close-requests", headers=auth_headers(token))
     assert resp.status_code == 200
     assert len(resp.json()) == 1
 
@@ -146,18 +136,18 @@ async def test_list_closure_requests_after_creating(client: AsyncClient, test_en
 
 @pytest.mark.asyncio
 async def test_complete_closure(client: AsyncClient, test_engine):
-    token = await _register(client, "completeclose")
+    token = await register_user(client, "completeclose")
     await _add_linked_email(test_engine, token, "complete@gmail.com")
     account_id = await _scan_and_get_account_id(client, token)
 
     create = await client.post(
-        "/accounts/close", headers=_auth(token),
+        "/accounts/close", headers=auth_headers(token),
         json={"discovered_account_id": account_id},
     )
     request_id = create.json()["id"]
 
     resp = await client.post(
-        "/accounts/close/complete", headers=_auth(token),
+        "/accounts/close/complete", headers=auth_headers(token),
         json={"request_id": request_id},
     )
     assert resp.status_code == 200
@@ -167,9 +157,9 @@ async def test_complete_closure(client: AsyncClient, test_engine):
 
 @pytest.mark.asyncio
 async def test_complete_closure_not_found(client: AsyncClient):
-    token = await _register(client)
+    token = await register_user(client)
     resp = await client.post(
-        "/accounts/close/complete", headers=_auth(token),
+        "/accounts/close/complete", headers=auth_headers(token),
         json={"request_id": str(uuid.uuid4())},
     )
     assert resp.status_code == 404
@@ -181,24 +171,24 @@ async def test_complete_closure_not_found(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_closure_scoped_to_user(client: AsyncClient, test_engine):
     """User 2 cannot see or complete User 1's closure requests."""
-    token1 = await _register(client, "closescope1")
-    token2 = await _register(client, "closescope2")
+    token1 = await register_user(client, "closescope1")
+    token2 = await register_user(client, "closescope2")
     await _add_linked_email(test_engine, token1, "scope@gmail.com")
     account_id = await _scan_and_get_account_id(client, token1)
 
     create = await client.post(
-        "/accounts/close", headers=_auth(token1),
+        "/accounts/close", headers=auth_headers(token1),
         json={"discovered_account_id": account_id},
     )
     request_id = create.json()["id"]
 
     # User 2 cannot list User 1's requests
-    resp = await client.get("/accounts/close-requests", headers=_auth(token2))
+    resp = await client.get("/accounts/close-requests", headers=auth_headers(token2))
     assert resp.json() == []
 
     # User 2 cannot complete User 1's request
     resp = await client.post(
-        "/accounts/close/complete", headers=_auth(token2),
+        "/accounts/close/complete", headers=auth_headers(token2),
         json={"request_id": request_id},
     )
     assert resp.status_code == 404
@@ -211,26 +201,26 @@ async def test_closure_scoped_to_user(client: AsyncClient, test_engine):
 async def test_full_closure_lifecycle(client: AsyncClient, test_engine):
     """Integration across all 5 phases: auth → email → scan → close → delete."""
     # Phase 2: Register
-    token = await _register(client, "lifecycleuser")
+    token = await register_user(client, "lifecycleuser")
 
     # Phase 3: Link email
     await _add_linked_email(test_engine, token, "lifecycle@gmail.com")
-    emails = await client.get("/emails", headers=_auth(token))
+    emails = await client.get("/emails", headers=auth_headers(token))
     assert len(emails.json()) == 1
 
     # Phase 4: Scan
-    scan = await client.post("/search", headers=_auth(token))
+    scan = await client.post("/search", headers=auth_headers(token))
     assert scan.status_code == 201
     sid = scan.json()["scan_session_id"]
 
-    detail = await client.get(f"/search/{sid}", headers=_auth(token))
+    detail = await client.get(f"/search/{sid}", headers=auth_headers(token))
     results = detail.json()["results"]
     assert len(results) >= 1
     account_id = results[0]["id"]
 
     # Phase 5: Request closure
     close_resp = await client.post(
-        "/accounts/close", headers=_auth(token),
+        "/accounts/close", headers=auth_headers(token),
         json={"discovered_account_id": account_id},
     )
     assert close_resp.status_code == 201
@@ -238,23 +228,23 @@ async def test_full_closure_lifecycle(client: AsyncClient, test_engine):
 
     # Phase 5: Mark as completed
     complete = await client.post(
-        "/accounts/close/complete", headers=_auth(token),
+        "/accounts/close/complete", headers=auth_headers(token),
         json={"request_id": request_id},
     )
     assert complete.json()["status"] == "completed"
 
     # Phase 5: Verify in closure list
-    requests = await client.get("/accounts/close-requests", headers=_auth(token))
+    requests = await client.get("/accounts/close-requests", headers=auth_headers(token))
     assert len(requests.json()) == 1
     assert requests.json()[0]["status"] == "completed"
 
     # Phase 2+5: Delete entire account (cascading)
     delete = await client.request(
         "DELETE", "/auth/account",
-        headers=_auth(token), json={"password": "testpass1"},
+        headers=auth_headers(token), json={"password": "testpass1"},
     )
     assert delete.status_code == 204
 
     # Token no longer works
-    me = await client.get("/auth/me", headers=_auth(token))
+    me = await client.get("/auth/me", headers=auth_headers(token))
     assert me.status_code == 401

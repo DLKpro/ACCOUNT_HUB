@@ -4,9 +4,6 @@ import uuid
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from account_hub.db.models import LinkedEmail, User
-from account_hub.security.encryption import encrypt_token
-from account_hub.security.hashing import hash_password
 from account_hub.services.discovery_service import (
     ScanNotFoundError,
     get_scan_history,
@@ -14,35 +11,12 @@ from account_hub.services.discovery_service import (
     get_scan_session,
     start_scan,
 )
-
-
-async def _create_user(db: AsyncSession, username: str = "scanuser") -> User:
-    user = User(username=username, password_hash=hash_password("pass"))
-    db.add(user)
-    await db.commit()
-    await db.refresh(user)
-    return user
-
-
-async def _link_email(
-    db: AsyncSession, user: User, email: str, provider: str = "google"
-) -> LinkedEmail:
-    linked = LinkedEmail(
-        user_id=user.id,
-        email_address=email,
-        provider=provider,
-        access_token_enc=encrypt_token("fake-token"),
-        is_verified=True,
-    )
-    db.add(linked)
-    await db.commit()
-    await db.refresh(linked)
-    return linked
+from tests.helpers import create_linked_email, create_test_user
 
 
 @pytest.mark.asyncio
 async def test_start_scan_no_emails(db_session: AsyncSession):
-    user = await _create_user(db_session)
+    user = await create_test_user(db_session)
     session = await start_scan(db_session, user.id)
     assert session.status == "completed"
     assert session.emails_scanned == 0
@@ -51,8 +25,8 @@ async def test_start_scan_no_emails(db_session: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_start_scan_with_linked_email(db_session: AsyncSession):
-    user = await _create_user(db_session)
-    await _link_email(db_session, user, "test@gmail.com", "google")
+    user = await create_test_user(db_session)
+    await create_linked_email(db_session, user, "test@gmail.com", "google")
 
     session = await start_scan(db_session, user.id)
     assert session.status == "completed"
@@ -63,9 +37,9 @@ async def test_start_scan_with_linked_email(db_session: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_start_scan_with_multiple_emails(db_session: AsyncSession):
-    user = await _create_user(db_session)
-    await _link_email(db_session, user, "a@gmail.com", "google")
-    await _link_email(db_session, user, "b@outlook.com", "microsoft")
+    user = await create_test_user(db_session)
+    await create_linked_email(db_session, user, "a@gmail.com", "google")
+    await create_linked_email(db_session, user, "b@outlook.com", "microsoft")
 
     session = await start_scan(db_session, user.id)
     assert session.status == "completed"
@@ -75,8 +49,8 @@ async def test_start_scan_with_multiple_emails(db_session: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_scan_results_contain_oauth_profile(db_session: AsyncSession):
-    user = await _create_user(db_session)
-    await _link_email(db_session, user, "user@gmail.com", "google")
+    user = await create_test_user(db_session)
+    await create_linked_email(db_session, user, "user@gmail.com", "google")
 
     session = await start_scan(db_session, user.id)
     results = await get_scan_results(db_session, session.id)
@@ -90,7 +64,7 @@ async def test_scan_results_contain_oauth_profile(db_session: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_get_scan_session(db_session: AsyncSession):
-    user = await _create_user(db_session)
+    user = await create_test_user(db_session)
     session = await start_scan(db_session, user.id)
 
     fetched = await get_scan_session(db_session, user.id, session.id)
@@ -100,15 +74,15 @@ async def test_get_scan_session(db_session: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_get_scan_session_not_found(db_session: AsyncSession):
-    user = await _create_user(db_session)
+    user = await create_test_user(db_session)
     with pytest.raises(ScanNotFoundError):
         await get_scan_session(db_session, user.id, uuid.uuid4())
 
 
 @pytest.mark.asyncio
 async def test_get_scan_session_wrong_user(db_session: AsyncSession):
-    user1 = await _create_user(db_session, "scanowner")
-    user2 = await _create_user(db_session, "scanother")
+    user1 = await create_test_user(db_session, "scanowner")
+    user2 = await create_test_user(db_session, "scanother")
     session = await start_scan(db_session, user1.id)
 
     with pytest.raises(ScanNotFoundError):
@@ -117,7 +91,7 @@ async def test_get_scan_session_wrong_user(db_session: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_scan_history(db_session: AsyncSession):
-    user = await _create_user(db_session)
+    user = await create_test_user(db_session)
     await start_scan(db_session, user.id)
     await start_scan(db_session, user.id)
 
@@ -127,7 +101,7 @@ async def test_scan_history(db_session: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_scan_history_limit(db_session: AsyncSession):
-    user = await _create_user(db_session)
+    user = await create_test_user(db_session)
     for _ in range(5):
         await start_scan(db_session, user.id)
 
@@ -138,8 +112,8 @@ async def test_scan_history_limit(db_session: AsyncSession):
 @pytest.mark.asyncio
 async def test_scan_deduplicates_results(db_session: AsyncSession):
     """Running multiple scans should not produce duplicates within a single scan."""
-    user = await _create_user(db_session)
-    await _link_email(db_session, user, "user@gmail.com", "google")
+    user = await create_test_user(db_session)
+    await create_linked_email(db_session, user, "user@gmail.com", "google")
 
     session = await start_scan(db_session, user.id)
     results = await get_scan_results(db_session, session.id)

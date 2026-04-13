@@ -131,3 +131,16 @@
 .link:hover {
   color: var(--color-teal-hover);
 }
+
+.success {
+  border-radius: 0.5rem;
+  background-color: color-mix(in srgb, var(--color-success) 10%, transparent);
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  color: var(--color-success);
+}
+
+.forgotLink {
+  text-align: right;
+  margin-top: -0.5rem;
+}

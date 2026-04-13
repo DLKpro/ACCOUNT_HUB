@@ -5,6 +5,8 @@ import { AuthGuard } from "@/components/layout/auth-guard";
 import { AppLayout } from "@/components/layout/app-layout";
 import LoginPage from "@/pages/login";
 import RegisterPage from "@/pages/register";
+import ForgotPasswordPage from "@/pages/forgot-password";
+import ResetPasswordPage from "@/pages/reset-password";
 import DashboardPage from "@/pages/dashboard";
 import EmailsPage from "@/pages/emails";
 import ScanPage from "@/pages/scan";
@@ -35,6 +37,8 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route element={<AuthGuard><AppLayout /></AuthGuard>}>
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/emails" element={<EmailsPage />} />

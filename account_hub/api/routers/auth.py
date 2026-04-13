@@ -7,6 +7,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from account_hub.api.dependencies import get_current_user, get_db
 from account_hub.api.limiter import limiter
 from account_hub.db.models import User
+from account_hub.services.password_reset_service import (
+    InvalidResetTokenError,
+    UserNotFoundError,
+    complete_password_reset,
+    request_password_reset,
+)
+from account_hub.services.password_reset_service import (
+    PasswordTooShortError as ResetPasswordTooShortError,
+)
 from account_hub.services.user_service import (
     AccountLockedError,
     InvalidCredentialsError,
@@ -38,6 +47,15 @@ class LoginRequest(BaseModel):
 
 class RefreshRequest(BaseModel):
     refresh_token: str
+
+
+class ForgotPasswordRequest(BaseModel):
+    username: str
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
 
 
 class DeleteAccountRequest(BaseModel):
@@ -126,6 +144,48 @@ async def me(current_user: User = Depends(get_current_user)):
         is_active=current_user.is_active,
         created_at=current_user.created_at.isoformat(),
     )
+
+
+@router.post("/forgot-password")
+@limiter.limit("3/minute")
+async def forgot_password(
+    request: Request, body: ForgotPasswordRequest, db: AsyncSession = Depends(get_db)
+):
+    """Request a password reset token. The token is logged to the server console."""
+    import logging
+
+    logger = logging.getLogger("account_hub.security")
+    try:
+        token = await request_password_reset(db, body.username)
+    except UserNotFoundError:
+        # Don't reveal whether the user exists
+        return {"message": "If that account exists, a reset link has been generated."}
+
+    reset_url = f"/reset-password?token={token}"
+    logger.info(
+        "PASSWORD_RESET_LINK: %s (username=%s)", reset_url, body.username
+    )
+    # In production, you would email this link instead of logging it
+    return {
+        "message": "If that account exists, a reset link has been generated.",
+        "reset_url": reset_url,
+    }
+
+
+@router.post("/reset-password")
+@limiter.limit("5/minute")
+async def reset_password(
+    request: Request, body: ResetPasswordRequest, db: AsyncSession = Depends(get_db)
+):
+    """Complete a password reset using a valid token."""
+    try:
+        await complete_password_reset(db, body.token, body.new_password)
+    except InvalidResetTokenError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except ResetPasswordTooShortError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    return {"message": "Password reset successfully. You can now log in."}
 
 
 @router.delete("/account", status_code=status.HTTP_204_NO_CONTENT)

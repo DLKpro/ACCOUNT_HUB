@@ -29,6 +29,20 @@ export const authApi = {
 
   me: () => apiFetch<UserResponse>("/auth/me"),
 
+  forgotPassword: (username: string) =>
+    apiFetch<{ message: string; reset_url?: string }>("/auth/forgot-password", {
+      method: "POST",
+      body: JSON.stringify({ username }),
+      skipAuth: true,
+    }),
+
+  resetPassword: (token: string, newPassword: string) =>
+    apiFetch<{ message: string }>("/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ token, new_password: newPassword }),
+      skipAuth: true,
+    }),
+
   deleteAccount: (password: string) =>
     apiFetch<void>("/auth/account", {
       method: "DELETE",

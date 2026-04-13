@@ -70,6 +70,10 @@ export default function LoginPage() {
             />
           </div>
 
+          <div className={styles.forgotLink}>
+            <Link to="/forgot-password" className={styles.link}>Forgot password?</Link>
+          </div>
+
           <button type="submit" disabled={loading} className={styles.button}>
             {loading ? "Signing in..." : "Sign in"}
           </button>

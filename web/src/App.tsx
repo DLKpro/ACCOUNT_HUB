@@ -4,6 +4,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { AuthGuard } from "@/components/layout/auth-guard";
 import { AppLayout } from "@/components/layout/app-layout";
 import { BrandLogo } from "@/components/brand-logo";
+import WelcomePage from "@/pages/welcome";
 import LoginPage from "@/pages/login";
 import RegisterPage from "@/pages/register";
 import ForgotPasswordPage from "@/pages/forgot-password";
@@ -34,6 +35,7 @@ export default function App() {
 
   return (
     <Routes>
+      <Route path="/welcome" element={<WelcomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -46,7 +48,7 @@ export default function App() {
         <Route path="/scan/:sessionId" element={<ScanDetailPage />} />
         <Route path="/closures" element={<ClosuresPage />} />
       </Route>
-      <Route path="*" element={<Navigate to={localStorage.getItem("refresh_token") ? "/dashboard" : localStorage.getItem("has_account") ? "/login" : "/register"} replace />} />
+      <Route path="*" element={<Navigate to={localStorage.getItem("refresh_token") ? "/dashboard" : localStorage.getItem("has_account") ? "/login" : "/welcome"} replace />} />
     </Routes>
   );
 }

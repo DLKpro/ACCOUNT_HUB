@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth-store";
 import { AuthGuard } from "@/components/layout/auth-guard";
 import { AppLayout } from "@/components/layout/app-layout";
+import { PageTransition } from "@/components/page-transition";
 import { BrandLogo } from "@/components/brand-logo";
 import WelcomePage from "@/pages/welcome";
 import LoginPage from "@/pages/login";
@@ -34,21 +35,23 @@ export default function App() {
   }
 
   return (
-    <Routes>
-      <Route path="/welcome" element={<WelcomePage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      <Route path="/reset-password" element={<ResetPasswordPage />} />
-      <Route path="/verify-email" element={<VerifyEmailPage />} />
-      <Route element={<AuthGuard><AppLayout /></AuthGuard>}>
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/emails" element={<EmailsPage />} />
-        <Route path="/scan" element={<ScanPage />} />
-        <Route path="/scan/:sessionId" element={<ScanDetailPage />} />
-        <Route path="/closures" element={<ClosuresPage />} />
-      </Route>
-      <Route path="*" element={<Navigate to={localStorage.getItem("refresh_token") ? "/dashboard" : localStorage.getItem("has_account") ? "/login" : "/welcome"} replace />} />
-    </Routes>
+    <PageTransition>
+      <Routes>
+        <Route path="/welcome" element={<WelcomePage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route element={<AuthGuard><AppLayout /></AuthGuard>}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/emails" element={<EmailsPage />} />
+          <Route path="/scan" element={<ScanPage />} />
+          <Route path="/scan/:sessionId" element={<ScanDetailPage />} />
+          <Route path="/closures" element={<ClosuresPage />} />
+        </Route>
+        <Route path="*" element={<Navigate to={localStorage.getItem("refresh_token") ? "/dashboard" : localStorage.getItem("has_account") ? "/login" : "/welcome"} replace />} />
+      </Routes>
+    </PageTransition>
   );
 }

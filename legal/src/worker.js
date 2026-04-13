@@ -240,13 +240,12 @@ const TERMS_HTML = `<!DOCTYPE html>
     <h2>17. Contact Information</h2>
     <p>If you have any questions or concerns about these Terms, please contact us at:</p>
     <div class="contact-block">
-      <p><strong>Name:</strong> Derek Kemle</p>
-      <p><strong>Email:</strong> dereklawrencekemle@icloud.com</p>
+      <p><strong>Email:</strong> support@dlopro.com</p>
     </div>
   </main>
 
   <footer>
-    &copy; 2026 Derek Kemle. All rights reserved.
+    &copy; 2026 AccountHub. All rights reserved.
   </footer>
 </body>
 </html>
@@ -393,13 +392,12 @@ const PRIVACY_HTML = `<!DOCTYPE html>
     <h2>12. Contact Information</h2>
     <p>If you have any questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact us at:</p>
     <div class="contact-block">
-      <p><strong>Name:</strong> Derek Kemle</p>
-      <p><strong>Email:</strong> dereklawrencekemle@icloud.com</p>
+      <p><strong>Email:</strong> support@dlopro.com</p>
     </div>
   </main>
 
   <footer>
-    &copy; 2026 Derek Kemle. All rights reserved.
+    &copy; 2026 AccountHub. All rights reserved.
   </footer>
 </body>
 </html>

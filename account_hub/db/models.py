@@ -38,6 +38,9 @@ class User(Base):
     scan_sessions: Mapped[List[ScanSession]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
+    closure_requests: Mapped[List[ClosureRequest]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 class LinkedEmail(Base):
@@ -149,3 +152,32 @@ class DiscoveredAccount(Base):
     )
 
     scan_session: Mapped[ScanSession] = relationship(back_populates="discovered_accounts")
+
+
+class ClosureRequest(Base):
+    __tablename__ = "closure_requests"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    discovered_account_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("discovered_accounts.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    service_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    method: Mapped[str] = mapped_column(String(20), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
+    deletion_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    requested_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    completed_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    user: Mapped[User] = relationship(back_populates="closure_requests")

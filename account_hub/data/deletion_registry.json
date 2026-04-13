@@ -1,0 +1,122 @@
+{
+  "Google Account": {
+    "deletion_url": "https://myaccount.google.com/delete-services-or-account",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Go to Google Account settings to delete individual services or the entire account."
+  },
+  "Microsoft Account": {
+    "deletion_url": "https://account.live.com/closeaccount.aspx",
+    "difficulty": "medium",
+    "method": "web",
+    "notes": "Account is deactivated for 60 days before permanent deletion. Cancel subscriptions first."
+  },
+  "Apple ID": {
+    "deletion_url": "https://privacy.apple.com/",
+    "difficulty": "medium",
+    "method": "web",
+    "notes": "Use Apple's Data and Privacy portal. All associated data will be deleted."
+  },
+  "Facebook": {
+    "deletion_url": "https://www.facebook.com/help/delete_account",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Account is deactivated for 30 days before permanent deletion."
+  },
+  "Twitter": {
+    "deletion_url": "https://twitter.com/settings/deactivate",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Deactivation page. Account deleted permanently after 30 days."
+  },
+  "LinkedIn": {
+    "deletion_url": "https://www.linkedin.com/psettings/account-management",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Close account from Account Management in settings."
+  },
+  "Instagram": {
+    "deletion_url": "https://www.instagram.com/accounts/remove/request/permanent/",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Permanently delete or temporarily deactivate."
+  },
+  "Adobe": {
+    "deletion_url": "https://accounts.adobe.com/privacy/data-management",
+    "difficulty": "medium",
+    "method": "web",
+    "notes": "Requires cancelling active subscriptions first."
+  },
+  "Spotify": {
+    "deletion_url": "https://support.spotify.com/us/close-account/",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Close account from the support page. Cancel Premium first."
+  },
+  "Amazon": {
+    "deletion_url": "https://www.amazon.com/privacy/data-deletion",
+    "difficulty": "hard",
+    "method": "web",
+    "notes": "Must contact support or use the data deletion request page."
+  },
+  "Dropbox": {
+    "deletion_url": "https://www.dropbox.com/account/delete",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Delete account from settings. Files are retained for recovery period."
+  },
+  "Reddit": {
+    "deletion_url": "https://www.reddit.com/prefs/deactivate/",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Account is permanently deleted. Posts remain but are disassociated."
+  },
+  "GitHub": {
+    "deletion_url": "https://github.com/settings/admin",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Delete account from Settings > Account. Transfer repos first."
+  },
+  "Netflix": {
+    "deletion_url": "https://www.netflix.com/cancelplan",
+    "difficulty": "medium",
+    "method": "web",
+    "notes": "Cancel membership first, then account is auto-deleted after 10 months."
+  },
+  "Slack": {
+    "deletion_url": "https://slack.com/help/articles/203953146",
+    "difficulty": "medium",
+    "method": "web",
+    "notes": "Individual workspaces must be left. Full account deletion via Slack support."
+  },
+  "Pinterest": {
+    "deletion_url": "https://www.pinterest.com/settings/privacy",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Deactivate or delete from Privacy settings."
+  },
+  "TikTok": {
+    "deletion_url": "https://support.tiktok.com/en/account-and-privacy/deleting-an-account",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Delete from Settings > Account > Delete Account. 30-day grace period."
+  },
+  "Snapchat": {
+    "deletion_url": "https://accounts.snapchat.com/accounts/delete_account",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Account deactivated for 30 days, then permanently deleted."
+  },
+  "Yahoo": {
+    "deletion_url": "https://login.yahoo.com/account/delete-user",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Account and all associated data permanently deleted after 40 days."
+  },
+  "Twitch": {
+    "deletion_url": "https://www.twitch.tv/settings/profile",
+    "difficulty": "easy",
+    "method": "web",
+    "notes": "Disable or delete account from profile settings."
+  }
+}

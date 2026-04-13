@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from account_hub.api.routers import auth, emails, oauth, search
+from account_hub.api.routers import accounts, auth, emails, oauth, search
 from account_hub.db.base import engine
 
 
@@ -34,6 +34,7 @@ def create_app() -> FastAPI:
     app.include_router(emails.router)
     app.include_router(oauth.router)
     app.include_router(search.router)
+    app.include_router(accounts.router)
     return app
 
 

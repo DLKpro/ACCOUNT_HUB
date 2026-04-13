@@ -63,6 +63,10 @@ class Settings(BaseSettings):
     meta_client_id: str = ""
     meta_client_secret: str = ""
 
+    # Email (Resend)
+    resend_api_key: str = ""
+    from_email: str = ""
+
     # HIBP
     hibp_api_key: str = ""
 

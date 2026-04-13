@@ -15,6 +15,9 @@
 .header {
   margin-bottom: 2rem;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .wordmark {
@@ -25,12 +28,14 @@
 
 .wordmarkLight {
   font-weight: 300;
-  color: var(--color-slate-light);
+  color: var(--color-ice);
+  letter-spacing: -0.03em;
 }
 
 .wordmarkBold {
   font-weight: 600;
-  color: white;
+  color: var(--color-teal);
+  letter-spacing: -0.03em;
 }
 
 .subtitle {

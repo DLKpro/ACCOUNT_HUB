@@ -13,23 +13,6 @@
   padding: 1.5rem;
 }
 
-.brandIcon {
-  height: 2rem;
-  width: 2rem;
-  border-radius: 0.5rem;
-  background-color: color-mix(in srgb, var(--color-teal) 10%, transparent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.brandDot {
-  height: 1rem;
-  width: 1rem;
-  border-radius: 50%;
-  border: 2px solid var(--color-teal);
-}
-
 .brandText {
   font-size: 1.125rem;
   letter-spacing: -0.025em;

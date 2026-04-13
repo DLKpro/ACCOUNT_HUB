@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { authApi } from "@/api/auth";
 import { ApiError } from "@/api/client";
+import { BrandLogo } from "@/components/brand-logo";
 import styles from "./login.module.css";
 
 export default function ForgotPasswordPage() {
@@ -35,6 +36,7 @@ export default function ForgotPasswordPage() {
     <div className={styles.page}>
       <div className={styles.container}>
         <div className={styles.header}>
+          <BrandLogo size={56} />
           <h1 className={styles.wordmark}>
             <span className={styles.wordmarkLight}>account</span>
             <span className={styles.wordmarkBold}>hub</span>

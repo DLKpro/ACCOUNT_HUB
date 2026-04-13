@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { authApi } from "@/api/auth";
 import { ApiError } from "@/api/client";
+import { BrandLogo } from "@/components/brand-logo";
 import styles from "./login.module.css";
 import registerStyles from "./register.module.css";
 
@@ -62,6 +63,7 @@ export default function ResetPasswordPage() {
     <div className={styles.page}>
       <div className={styles.container}>
         <div className={styles.header}>
+          <BrandLogo size={56} />
           <h1 className={styles.wordmark}>
             <span className={styles.wordmarkLight}>account</span>
             <span className={styles.wordmarkBold}>hub</span>

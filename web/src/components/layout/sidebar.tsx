@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth-store";
+import { BrandLogo } from "@/components/brand-logo";
 import { LayoutDashboard, Mail, Search, Trash2, Settings, LogOut } from "lucide-react";
 import styles from "./sidebar.module.css";
 
@@ -24,9 +25,7 @@ export function Sidebar() {
   return (
     <aside className={styles.sidebar}>
       <div className={styles.brand}>
-        <div className={styles.brandIcon}>
-          <div className={styles.brandDot} />
-        </div>
+        <BrandLogo size={32} />
         <span className={styles.brandText}>
           <span className={styles.brandLight}>account</span>
           <span className={styles.brandBold}>hub</span>

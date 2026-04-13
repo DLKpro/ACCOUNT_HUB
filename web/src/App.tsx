@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth-store";
 import { AuthGuard } from "@/components/layout/auth-guard";
 import { AppLayout } from "@/components/layout/app-layout";
+import { BrandLogo } from "@/components/brand-logo";
 import LoginPage from "@/pages/login";
 import RegisterPage from "@/pages/register";
 import ForgotPasswordPage from "@/pages/forgot-password";
@@ -25,10 +26,7 @@ export default function App() {
   if (isLoading) {
     return (
       <div className={styles.loading}>
-        <div className={styles.wordmark}>
-          <span className={styles.wordmarkLight}>account</span>
-          <span className={styles.wordmarkBold}>hub</span>
-        </div>
+        <BrandLogo size={64} />
       </div>
     );
   }

@@ -3,14 +3,16 @@
 
 @theme {
   --color-midnight: #060F1E;
-  --color-midnight-light: #0C1A2E;
+  --color-midnight-light: #0D2137;
   --color-midnight-lighter: #132240;
   --color-midnight-border: #1E3054;
   --color-teal: #2DD4BF;
+  --color-teal-deep: #0D9488;
   --color-teal-dim: #2DD4BF40;
   --color-teal-hover: #5EEAD4;
-  --color-slate: #94A3B8;
-  --color-slate-light: #CBD5E1;
+  --color-slate: #5A8FAE;
+  --color-slate-light: #D8EAF6;
+  --color-ice: #E6F0FA;
   --color-danger: #F87171;
   --color-warning: #FBBF24;
   --color-success: #34D399;

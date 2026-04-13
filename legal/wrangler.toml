@@ -1,0 +1,12 @@
+name = "accounthub-legal"
+main = "src/worker.js"
+compatibility_date = "2024-01-01"
+
+[triggers]
+crons = []
+
+[env.production]
+routes = [
+  { pattern = "AccountHub.dlopro.ca/terms", zone_name = "dlopro.ca" },
+  { pattern = "AccountHub.dlopro.ca/privacy", zone_name = "dlopro.ca" }
+]

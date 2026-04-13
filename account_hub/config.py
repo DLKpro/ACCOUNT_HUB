@@ -58,6 +58,7 @@ class Settings(BaseSettings):
     apple_team_id: str = ""
     apple_key_id: str = ""
     apple_private_key_path: str = ""
+    apple_private_key: str = ""  # PEM contents directly (for Railway / container deploys)
 
     # Meta OAuth
     meta_client_id: str = ""

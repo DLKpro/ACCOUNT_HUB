@@ -367,6 +367,7 @@ async def _exchange_code(
         client_secret = generate_apple_client_secret(
             settings.apple_team_id, settings.apple_client_id,
             settings.apple_key_id, settings.apple_private_key_path,
+            private_key=settings.apple_private_key,
         )
     else:
         client_secret = provider.client_secret

@@ -97,6 +97,7 @@ async def try_revoke_token(email: LinkedEmail) -> None:
                 client_secret = generate_apple_client_secret(
                     settings.apple_team_id, settings.apple_client_id,
                     settings.apple_key_id, settings.apple_private_key_path,
+                    private_key=settings.apple_private_key,
                 )
                 token_to_revoke = refresh_token or access_token
                 hint = "refresh_token" if refresh_token else "access_token"

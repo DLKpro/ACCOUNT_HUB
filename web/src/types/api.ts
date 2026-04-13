@@ -9,7 +9,6 @@ export interface RegisterResponse extends TokenResponse {
   username: string;
   email: string;
   email_verified: boolean;
-  verification_url?: string;
 }
 
 export interface UserResponse {

@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from account_hub.api.dependencies import get_current_user, get_db
 from account_hub.api.limiter import limiter
 from account_hub.db.models import User
+from account_hub.services.mail_service import send_password_reset_email, send_verification_email
 from account_hub.services.password_reset_service import (
     InvalidResetTokenError,
     UserNotFoundError,
@@ -93,7 +94,6 @@ class RegisterResponse(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
-    verification_url: str | None = None
 
 
 class UserResponse(BaseModel):
@@ -111,9 +111,6 @@ class UserResponse(BaseModel):
 @router.post("/register", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("5/minute")
 async def register(request: Request, body: RegisterRequest, db: AsyncSession = Depends(get_db)):
-    import logging
-    logger = logging.getLogger("account_hub.security")
-
     try:
         user, tokens = await register_user(db, body.username, body.email, body.password)
     except (UsernameInvalidError, EmailInvalidError, PasswordTooShortError) as e:
@@ -121,10 +118,9 @@ async def register(request: Request, body: RegisterRequest, db: AsyncSession = D
     except (UsernameTakenError, EmailTakenError) as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
 
-    # Generate email verification token
+    # Generate and send email verification
     vtoken = await create_verification_token(db, user.id)
-    verification_url = f"/verify-email?token={vtoken}"
-    logger.info("VERIFICATION_LINK: %s (user=%s)", verification_url, user.username)
+    send_verification_email(user.email, user.username, vtoken)
 
     return RegisterResponse(
         id=str(user.id),
@@ -133,7 +129,6 @@ async def register(request: Request, body: RegisterRequest, db: AsyncSession = D
         email_verified=False,
         access_token=tokens.access_token,
         refresh_token=tokens.refresh_token,
-        verification_url=verification_url,
     )
 
 
@@ -203,17 +198,13 @@ async def resend_verification(
     db: AsyncSession = Depends(get_db),
 ):
     """Resend the email verification token."""
-    import logging
-    logger = logging.getLogger("account_hub.security")
-
     if current_user.email_verified:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email is already verified")
 
     vtoken = await create_verification_token(db, current_user.id)
-    verification_url = f"/verify-email?token={vtoken}"
-    logger.info("VERIFICATION_LINK: %s (user=%s)", verification_url, current_user.username)
+    send_verification_email(current_user.email, current_user.username, vtoken)
 
-    return {"message": "Verification link generated.", "verification_url": verification_url}
+    return {"message": "Verification email sent."}
 
 
 @router.post("/forgot-password")
@@ -221,25 +212,21 @@ async def resend_verification(
 async def forgot_password(
     request: Request, body: ForgotPasswordRequest, db: AsyncSession = Depends(get_db)
 ):
-    """Request a password reset token. The token is logged to the server console."""
-    import logging
-
-    logger = logging.getLogger("account_hub.security")
+    """Request a password reset. Sends a reset link to the user's email."""
     try:
         token = await request_password_reset(db, body.username)
     except UserNotFoundError:
         # Don't reveal whether the user exists
-        return {"message": "If that account exists, a reset link has been generated."}
+        return {"message": "If that account exists, a reset link has been sent."}
 
-    reset_url = f"/reset-password?token={token}"
-    logger.info(
-        "PASSWORD_RESET_LINK: %s (username=%s)", reset_url, body.username
-    )
-    # In production, you would email this link instead of logging it
-    return {
-        "message": "If that account exists, a reset link has been generated.",
-        "reset_url": reset_url,
-    }
+    # Look up the user's email to send the reset link
+    from sqlalchemy import select
+    result = await db.execute(select(User).where(User.username == body.username.lower().strip()))
+    user = result.scalar_one_or_none()
+    if user:
+        send_password_reset_email(user.email, user.username, token)
+
+    return {"message": "If that account exists, a reset link has been sent."}
 
 
 @router.post("/reset-password")

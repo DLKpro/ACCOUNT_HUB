@@ -54,6 +54,11 @@ class Settings(BaseSettings):
     # HIBP
     hibp_api_key: str = ""
 
+    # Email (Resend)
+    resend_api_key: str = ""
+    from_email: str = "AccountHub <noreply@yourdomain.com>"
+    app_url: str = "http://localhost:3000"
+
     # API
     api_host: str = "127.0.0.1"
     api_port: int = 8000

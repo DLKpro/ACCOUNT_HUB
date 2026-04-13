@@ -93,6 +93,21 @@ def create_app() -> FastAPI:
         logger.info("%s %s -> %s", request.method, request.url.path, response.status_code)
         return response
 
+    @app.get("/healthz")
+    async def healthz():
+        from account_hub.db.base import async_session_factory
+        from sqlalchemy import text
+        try:
+            async with async_session_factory() as session:
+                await session.execute(text("SELECT 1"))
+            return {"status": "healthy", "db": "connected"}
+        except Exception:
+            return Response(
+                content='{"status":"unhealthy","db":"unreachable"}',
+                status_code=503,
+                media_type="application/json",
+            )
+
     app.include_router(auth.router)
     app.include_router(emails.router)
     app.include_router(oauth.router)

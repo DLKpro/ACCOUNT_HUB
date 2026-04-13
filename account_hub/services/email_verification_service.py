@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import logging
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -48,7 +48,7 @@ async def create_verification_token(db: AsyncSession, user_id: str) -> str:
     token = EmailVerificationToken(
         user_id=user_id,
         token_hash=_hash_token(plaintext),
-        expires_at=datetime.now(datetime.UTC) + timedelta(hours=VERIFICATION_TOKEN_EXPIRY_HOURS),
+        expires_at=datetime.now(timezone.utc) + timedelta(hours=VERIFICATION_TOKEN_EXPIRY_HOURS),
     )
     db.add(token)
     await db.commit()
@@ -64,7 +64,7 @@ async def verify_email(db: AsyncSession, token: str) -> User:
         select(EmailVerificationToken).where(
             EmailVerificationToken.token_hash == token_hash,
             EmailVerificationToken.used.is_(False),
-            EmailVerificationToken.expires_at > datetime.now(datetime.UTC),
+            EmailVerificationToken.expires_at > datetime.now(timezone.utc),
         )
     )
     vt = result.scalar_one_or_none()

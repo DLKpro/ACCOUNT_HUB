@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import logging
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -62,7 +62,7 @@ async def request_password_reset(db: AsyncSession, username: str) -> str:
     reset_token = PasswordResetToken(
         user_id=user.id,
         token_hash=_hash_token(plaintext_token),
-        expires_at=datetime.now(datetime.UTC) + timedelta(minutes=RESET_TOKEN_EXPIRY_MINUTES),
+        expires_at=datetime.now(timezone.utc) + timedelta(minutes=RESET_TOKEN_EXPIRY_MINUTES),
     )
     db.add(reset_token)
     await db.commit()
@@ -86,7 +86,7 @@ async def complete_password_reset(
         select(PasswordResetToken).where(
             PasswordResetToken.token_hash == token_hash,
             PasswordResetToken.used.is_(False),
-            PasswordResetToken.expires_at > datetime.now(datetime.UTC),
+            PasswordResetToken.expires_at > datetime.now(timezone.utc),
         )
     )
     reset_token = result.scalar_one_or_none()
@@ -96,7 +96,7 @@ async def complete_password_reset(
 
     # Mark token as used
     reset_token.used = True
-    reset_token.used_at = datetime.now(datetime.UTC)
+    reset_token.used_at = datetime.now(timezone.utc)
 
     # Update user password and clear lockout
     user_result = await db.execute(

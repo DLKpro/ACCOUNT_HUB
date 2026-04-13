@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from account_hub.db.models import DiscoveredAccount, LinkedEmail, ScanSession
 from account_hub.discovery.base import BaseScanner, DiscoveredAccountResult
+from account_hub.discovery.gravatar import GravatarScanner
 from account_hub.discovery.hibp import HIBPBreachScanner
 from account_hub.discovery.oauth_profile import OAuthProfileScanner
 
@@ -26,6 +27,7 @@ def _get_scanners(provider: str) -> List[BaseScanner]:
     """Build the list of scanners for a given email provider."""
     scanners: List[BaseScanner] = [
         OAuthProfileScanner(provider),
+        GravatarScanner(),
         HIBPBreachScanner(),
     ]
     return [s for s in scanners if s.is_available()]

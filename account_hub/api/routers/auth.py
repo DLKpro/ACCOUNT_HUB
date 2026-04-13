@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from account_hub.api.limiter import limiter
 
 from account_hub.api.dependencies import get_current_user, get_db
 from account_hub.db.models import User
@@ -69,7 +71,8 @@ class UserResponse(BaseModel):
 
 
 @router.post("/register", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED)
-async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
+@limiter.limit("5/minute")
+async def register(request: Request, body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     try:
         user, tokens = await register_user(db, body.username, body.password)
     except UsernameInvalid as e:
@@ -86,7 +89,8 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
+@limiter.limit("10/minute")
+async def login(request: Request, body: LoginRequest, db: AsyncSession = Depends(get_db)):
     try:
         _user, tokens = await authenticate_user(db, body.username, body.password)
     except InvalidCredentials as e:

@@ -55,6 +55,17 @@ def test_oauth_profile_scanner_name():
     assert scanner.name == "oauth_profile_google"
 
 
+# --- GravatarScanner ---
+
+
+def test_gravatar_scanner_is_available():
+    from account_hub.discovery.gravatar import GravatarScanner
+
+    scanner = GravatarScanner()
+    assert scanner.is_available() is True
+    assert scanner.name == "gravatar"
+
+
 # --- HIBPBreachScanner (availability check only — no real API calls) ---
 
 

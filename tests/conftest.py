@@ -60,6 +60,10 @@ async def client(test_engine) -> AsyncGenerator[AsyncClient, None]:
     app = create_app()
     app.dependency_overrides[get_db] = override_get_db
 
+    # Disable rate limiting during tests
+    from account_hub.api.limiter import limiter
+    limiter.enabled = False
+
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac

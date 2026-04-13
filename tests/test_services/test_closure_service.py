@@ -44,7 +44,7 @@ def test_get_closure_info_unknown_service():
 
 def test_list_registry_services():
     services = list_registry_services()
-    assert len(services) >= 10
+    assert len(services) >= 30
     assert "Google Account" in services
     assert "Twitter" in services
     assert "Facebook" in services

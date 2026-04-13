@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import Response
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from account_hub.api.limiter import limiter
 
 from account_hub.api.dependencies import get_current_user, get_db
 from account_hub.db.models import User
@@ -62,7 +64,9 @@ class ScanSummaryResponse(BaseModel):
 
 
 @router.post("", response_model=ScanStartResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("3/minute")
 async def create_scan(
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):

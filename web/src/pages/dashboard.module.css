@@ -1,0 +1,30 @@
+.page { max-width: 56rem; }
+.header { margin-bottom: 2rem; }
+.title { font-size: 1.5rem; font-weight: 600; color: white; margin: 0; }
+.accent { color: var(--color-teal); }
+.subtitle { margin-top: 0.25rem; font-size: 0.875rem; color: var(--color-slate); }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
+@media (max-width: 640px) { .stats { grid-template-columns: 1fr; } }
+.statCard { display: flex; align-items: center; gap: 0.75rem; padding: 1.25rem; border-radius: 0.75rem; border: 1px solid var(--color-midnight-border); background-color: var(--color-midnight-light); text-decoration: none; transition: border-color 0.15s; }
+.statCard:hover { border-color: color-mix(in srgb, var(--color-teal) 30%, transparent); }
+.statIcon { padding: 0.5rem; border-radius: 0.5rem; background-color: color-mix(in srgb, var(--color-teal) 10%, transparent); color: var(--color-teal); display: flex; }
+.statValue { font-size: 1.5rem; font-weight: 600; color: white; }
+.statLabel { font-size: 0.75rem; color: var(--color-slate); }
+.section { margin-bottom: 2rem; }
+.sectionTitle { margin: 0 0 0.75rem; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-slate); }
+.card { padding: 1.25rem; border-radius: 0.75rem; border: 1px solid var(--color-midnight-border); background-color: var(--color-midnight-light); }
+.cardRow { display: flex; align-items: center; justify-content: space-between; }
+.cardText { font-size: 0.875rem; color: var(--color-slate-light); }
+.cardMeta { margin-top: 0.25rem; font-size: 0.75rem; color: var(--color-slate); }
+.cardLink { display: flex; align-items: center; gap: 0.25rem; font-size: 0.875rem; color: var(--color-teal); text-decoration: none; transition: color 0.15s; }
+.cardLink:hover { color: var(--color-teal-hover); }
+.emptyCard { padding: 2rem; border-radius: 0.75rem; border: 1px dashed var(--color-midnight-border); background-color: color-mix(in srgb, var(--color-midnight-light) 50%, transparent); text-align: center; }
+.emptyText { font-size: 0.875rem; color: var(--color-slate); margin: 0; }
+.emptyLink { display: inline-block; margin-top: 0.5rem; font-size: 0.875rem; color: var(--color-teal); text-decoration: none; transition: color 0.15s; }
+.emptyLink:hover { color: var(--color-teal-hover); }
+.emailList { display: flex; flex-direction: column; gap: 0.5rem; }
+.emailRow { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1.25rem; border-radius: 0.75rem; border: 1px solid var(--color-midnight-border); background-color: var(--color-midnight-light); }
+.emailInfo { display: flex; align-items: center; gap: 0.75rem; }
+.emailIcon { color: var(--color-teal); }
+.emailAddress { font-size: 0.875rem; color: var(--color-slate-light); }
+.emailBadge { padding: 0.125rem 0.625rem; border-radius: 9999px; background-color: var(--color-midnight-lighter); font-size: 0.75rem; font-weight: 500; color: var(--color-slate); text-transform: capitalize; }

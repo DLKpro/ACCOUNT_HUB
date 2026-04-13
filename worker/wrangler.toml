@@ -1,0 +1,7 @@
+name = "accounthub-oauth-relay"
+main = "src/index.js"
+compatibility_date = "2026-04-12"
+
+[[routes]]
+pattern = "dlopro.com/callback"
+zone_name = "dlopro.com"

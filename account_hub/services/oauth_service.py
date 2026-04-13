@@ -195,7 +195,10 @@ async def handle_oauth_callback(
     provider = get_provider(provider_name)
 
     # Exchange code for tokens
-    token_data = await _exchange_code(provider, code, redirect_port, provider_name, code_verifier=code_verifier)
+    token_data = await _exchange_code(
+        provider, code, redirect_port, provider_name,
+        code_verifier=code_verifier,
+    )
 
     # Validate OIDC nonce if present
     if stored_nonce and "id_token" in token_data:

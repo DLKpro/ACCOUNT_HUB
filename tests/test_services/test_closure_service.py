@@ -68,7 +68,12 @@ def test_registry_entries_have_required_fields():
 async def _setup_user_with_scan(db: AsyncSession):
     """Create a user, linked email, scan session, and discovered account."""
     uname = f"closeuser_{uuid.uuid4().hex[:6]}"
-    user = User(username=uname, email=f"{uname}@test.com", email_verified=True, password_hash=hash_password("pass"))
+    user = User(
+        username=uname,
+        email=f"{uname}@test.com",
+        email_verified=True,
+        password_hash=hash_password("pass"),
+    )
     db.add(user)
     await db.commit()
     await db.refresh(user)
@@ -117,7 +122,12 @@ async def test_request_closure_unknown_account(db_session: AsyncSession):
 async def test_request_closure_wrong_user(db_session: AsyncSession):
     _, account = await _setup_user_with_scan(db_session)
     oname = f"other_{uuid.uuid4().hex[:6]}"
-    other_user = User(username=oname, email=f"{oname}@test.com", email_verified=True, password_hash=hash_password("p"))
+    other_user = User(
+        username=oname,
+        email=f"{oname}@test.com",
+        email_verified=True,
+        password_hash=hash_password("p"),
+    )
     db_session.add(other_user)
     await db_session.commit()
     await db_session.refresh(other_user)

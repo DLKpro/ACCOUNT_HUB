@@ -24,6 +24,7 @@ from account_hub.services.oauth_service import (
     TokenExchangeFailedError,
     UserInfoFailedError,
 )
+from tests.helpers import auth_headers, register_user
 
 
 @pytest.fixture(autouse=True)
@@ -41,9 +42,6 @@ def setup_test_provider():
             client_secret="test-client-secret",
         ))
     yield
-
-
-from tests.helpers import auth_headers, register_user
 
 
 # --- OAuth Initiate ---
@@ -182,7 +180,9 @@ async def test_full_auth_then_initiate_flow(client: AsyncClient):
     """Integration: register → login → initiate OAuth → verify state exists."""
     # Register
     reg = await client.post("/auth/register", json={
-        "username": "fullflowemailuser", "email": "fullflowemailuser@test.com", "password": "testpass1"
+        "username": "fullflowemailuser",
+        "email": "fullflowemailuser@test.com",
+        "password": "testpass1",
     })
     assert reg.status_code == 201
 

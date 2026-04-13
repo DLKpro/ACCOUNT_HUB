@@ -43,7 +43,10 @@ def test_linked_email_columns():
 
 def test_oauth_state_columns():
     cols = {c.name for c in OAuthState.__table__.columns}
-    expected = {"id", "state", "user_id", "provider", "redirect_port", "code_verifier", "nonce", "created_at", "expires_at"}
+    expected = {
+        "id", "state", "user_id", "provider", "redirect_port",
+        "code_verifier", "nonce", "created_at", "expires_at",
+    }
     assert expected == cols
 
 

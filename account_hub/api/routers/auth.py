@@ -7,7 +7,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from account_hub.api.dependencies import get_current_user, get_db
 from account_hub.api.limiter import limiter
 from account_hub.db.models import User
-from account_hub.services.mail_service import send_password_reset_email, send_verification_email
+from account_hub.services.email_verification_service import (
+    AlreadyVerifiedError,
+    InvalidVerificationTokenError,
+    create_verification_token,
+    verify_email,
+)
+from account_hub.services.mail_service import (
+    send_password_reset_email,
+    send_verification_email,
+)
 from account_hub.services.password_reset_service import (
     InvalidResetTokenError,
     UserNotFoundError,
@@ -16,12 +25,6 @@ from account_hub.services.password_reset_service import (
 )
 from account_hub.services.password_reset_service import (
     PasswordTooShortError as ResetPasswordTooShortError,
-)
-from account_hub.services.email_verification_service import (
-    AlreadyVerifiedError,
-    InvalidVerificationTokenError,
-    create_verification_token,
-    verify_email,
 )
 from account_hub.services.user_service import (
     AccountLockedError,
@@ -199,7 +202,10 @@ async def resend_verification(
 ):
     """Resend the email verification token."""
     if current_user.email_verified:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email is already verified")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email is already verified",
+        )
 
     vtoken = await create_verification_token(db, current_user.id)
     send_verification_email(current_user.email, current_user.username, vtoken)

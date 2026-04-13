@@ -193,12 +193,18 @@ async def meta_data_deletion(
     from account_hub.services.email_service import try_revoke_token
 
     if not settings.meta_client_secret:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Not configured")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Not configured",
+        )
 
     try:
         data = _parse_meta_signed_request(signed_request, settings.meta_client_secret)
     except ValueError:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid signed request")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid signed request",
+        )
 
     meta_user_id = str(data.get("user_id", ""))
     if not meta_user_id:

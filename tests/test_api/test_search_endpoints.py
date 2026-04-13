@@ -16,7 +16,11 @@ from account_hub.security.encryption import encrypt_token
 async def _register(client: AsyncClient, test_engine, username: str = None) -> str:
     """Register, verify email, and return access token."""
     uname = username or f"user_{uuid.uuid4().hex[:8]}"
-    resp = await client.post("/auth/register", json={"username": uname, "email": f"{uname}@test.com", "password": "testpass1"})
+    resp = await client.post("/auth/register", json={
+        "username": uname,
+        "email": f"{uname}@test.com",
+        "password": "testpass1",
+    })
     assert resp.status_code == 201
     token = resp.json()["access_token"]
     # Mark email as verified so scans work
@@ -31,6 +35,7 @@ def _auth(token: str) -> dict:
 async def _verify_user(test_engine, token: str):
     """Mark the user as email-verified in the DB."""
     from jose import jwt as jose_jwt
+
     from account_hub.config import settings
     from account_hub.db.models import User
 

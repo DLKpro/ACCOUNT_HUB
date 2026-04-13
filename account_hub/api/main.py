@@ -32,7 +32,9 @@ async def lifespan(app: FastAPI):
             await conn.run_sync(Base.metadata.create_all)
         logger.info("Database tables ensured")
     except Exception:
-        logger.exception("Failed to connect to database — app will start but DB operations will fail")
+        logger.exception(
+            "Failed to connect to database — app will start but DB operations will fail"
+        )
 
     # Register OAuth providers on startup
     from account_hub.oauth.apple import setup_apple
@@ -95,8 +97,9 @@ def create_app() -> FastAPI:
 
     @app.get("/healthz")
     async def healthz():
-        from account_hub.db.base import async_session_factory
         from sqlalchemy import text
+
+        from account_hub.db.base import async_session_factory
         try:
             async with async_session_factory() as session:
                 await session.execute(text("SELECT 1"))

@@ -13,7 +13,12 @@ from account_hub.security.hashing import hash_password
 
 
 async def create_test_user(db: AsyncSession, username: str = "testuser") -> User:
-    user = User(username=username, email=f"{username}@test.com", email_verified=True, password_hash=hash_password("pass"))
+    user = User(
+        username=username,
+        email=f"{username}@test.com",
+        email_verified=True,
+        password_hash=hash_password("pass"),
+    )
     db.add(user)
     await db.commit()
     await db.refresh(user)
@@ -39,7 +44,13 @@ async def create_linked_email(
     return linked
 
 
-async def register_user(client: AsyncClient, username: str | None = None, *, verified: bool = False, test_engine=None) -> str:
+async def register_user(
+    client: AsyncClient,
+    username: str | None = None,
+    *,
+    verified: bool = False,
+    test_engine=None,
+) -> str:
     """Register a user via the API and return the access token.
 
     If verified=True and test_engine is provided, the user's email is
@@ -54,6 +65,7 @@ async def register_user(client: AsyncClient, username: str | None = None, *, ver
 
     if verified and test_engine:
         from jose import jwt as jose_jwt
+
         from account_hub.config import settings
 
         payload = jose_jwt.decode(token, settings.secret_key, algorithms=["HS256"])

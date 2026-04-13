@@ -90,7 +90,9 @@ async def test_authenticate_nonexistent_user_raises(db_session: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_refresh_tokens_returns_valid_pair(db_session: AsyncSession):
-    user, tokens = await register_user(db_session, "refreshtest", "refreshtest@test.com", "testpass1")
+    user, tokens = await register_user(
+        db_session, "refreshtest", "refreshtest@test.com", "testpass1",
+    )
     new_tokens = await refresh_tokens(db_session, tokens.refresh_token)
     # New tokens should decode to the same user
     assert decode_token(new_tokens.access_token, "access") == user.id

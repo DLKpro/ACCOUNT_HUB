@@ -53,7 +53,12 @@ def setup_test_provider():
 
 
 async def _create_test_user(db: AsyncSession) -> User:
-    user = User(username="oauthuser", email="oauthuser@test.com", email_verified=True, password_hash=hash_password("pass"))
+    user = User(
+        username="oauthuser",
+        email="oauthuser@test.com",
+        email_verified=True,
+        password_hash=hash_password("pass"),
+    )
     db.add(user)
     await db.commit()
     await db.refresh(user)

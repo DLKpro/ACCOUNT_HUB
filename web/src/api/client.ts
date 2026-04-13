@@ -1,6 +1,6 @@
 import { useAuthStore } from "@/stores/auth-store";
 
-const API_BASE = "/api";
+const API_BASE = import.meta.env.DEV ? "/api" : "";
 
 export class ApiError extends Error {
   constructor(

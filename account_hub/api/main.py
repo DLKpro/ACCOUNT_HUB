@@ -1,8 +1,10 @@
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
@@ -54,9 +56,16 @@ def create_app() -> FastAPI:
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
     # CORS
+    from account_hub.config import settings
+    origins = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+    if settings.app_url:
+        origins.append(settings.app_url)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+        allow_origins=origins,
         allow_credentials=True,
         allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
         allow_headers=["Content-Type", "Authorization"],
@@ -80,6 +89,25 @@ def create_app() -> FastAPI:
     app.include_router(oauth.router)
     app.include_router(search.router)
     app.include_router(accounts.router)
+
+    # Serve frontend static files in production
+    static_dir = Path(__file__).resolve().parent.parent.parent / "web" / "dist"
+    if static_dir.is_dir():
+        from fastapi.responses import FileResponse
+
+        # Serve static assets (JS, CSS, images)
+        app.mount("/assets", StaticFiles(directory=static_dir / "assets"), name="static-assets")
+
+        # Serve other static files (favicon, etc.)
+        @app.get("/favicon.svg")
+        async def favicon():
+            return FileResponse(static_dir / "favicon.svg")
+
+        # SPA fallback: serve index.html for all non-API routes
+        @app.get("/{path:path}")
+        async def spa_fallback(path: str):
+            return FileResponse(static_dir / "index.html")
+
     return app
 
 

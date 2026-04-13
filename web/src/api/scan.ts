@@ -19,7 +19,8 @@ export const scanApi = {
   exportCsv: async (sessionId: string): Promise<string> => {
     const { useAuthStore } = await import("@/stores/auth-store");
     const token = useAuthStore.getState().accessToken;
-    const resp = await fetch(`/api/search/${sessionId}/export`, {
+    const base = import.meta.env.DEV ? "/api" : "";
+    const resp = await fetch(`${base}/search/${sessionId}/export`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     if (!resp.ok) throw new Error("Export failed");

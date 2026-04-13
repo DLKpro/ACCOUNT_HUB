@@ -21,13 +21,16 @@ def _send(to: str, subject: str, html: str) -> None:
         return
 
     resend.api_key = settings.resend_api_key
-    resend.Emails.send({
-        "from": settings.from_email,
-        "to": [to],
-        "subject": subject,
-        "html": html,
-    })
-    logger.info("Email sent to %s: %s", to, subject)
+    try:
+        resend.Emails.send({
+            "from": settings.from_email,
+            "to": [to],
+            "subject": subject,
+            "html": html,
+        })
+        logger.info("Email sent to %s: %s", to, subject)
+    except Exception as e:
+        logger.error("Failed to send email to %s: %s", to, e)
 
 
 def send_verification_email(to: str, username: str, token: str) -> None:

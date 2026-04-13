@@ -6,6 +6,10 @@ import { AppLayout } from "@/components/layout/app-layout";
 import LoginPage from "@/pages/login";
 import RegisterPage from "@/pages/register";
 import DashboardPage from "@/pages/dashboard";
+import EmailsPage from "@/pages/emails";
+import ScanPage from "@/pages/scan";
+import ScanDetailPage from "@/pages/scan-detail";
+import ClosuresPage from "@/pages/closures";
 import styles from "./App.module.css";
 
 export default function App() {
@@ -33,6 +37,10 @@ export default function App() {
       <Route path="/register" element={<RegisterPage />} />
       <Route element={<AuthGuard><AppLayout /></AuthGuard>}>
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/emails" element={<EmailsPage />} />
+        <Route path="/scan" element={<ScanPage />} />
+        <Route path="/scan/:sessionId" element={<ScanDetailPage />} />
+        <Route path="/closures" element={<ClosuresPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>

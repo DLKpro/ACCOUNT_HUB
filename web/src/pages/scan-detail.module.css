@@ -1,0 +1,21 @@
+.page { max-width: 56rem; }
+.back { display: inline-flex; align-items: center; gap: 0.375rem; font-size: 0.875rem; color: var(--color-slate); text-decoration: none; margin-bottom: 1.5rem; transition: color 0.15s; }
+.back:hover { color: var(--color-teal); }
+.header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 2rem; }
+.title { font-size: 1.5rem; font-weight: 600; color: white; margin: 0; }
+.subtitle { margin-top: 0.25rem; font-size: 0.875rem; color: var(--color-slate); }
+.accent { color: var(--color-teal); }
+.exportBtn { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 0.75rem; border: 1px solid var(--color-midnight-border); background-color: var(--color-midnight-light); color: var(--color-slate-light); font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: border-color 0.15s; }
+.exportBtn:hover { border-color: color-mix(in srgb, var(--color-teal) 30%, transparent); }
+.resultList { display: flex; flex-direction: column; gap: 0.5rem; }
+.resultRow { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-radius: 0.75rem; border: 1px solid var(--color-midnight-border); background-color: var(--color-midnight-light); }
+.resultInfo { display: flex; align-items: center; gap: 0.75rem; }
+.resultIcon { color: var(--color-teal); flex-shrink: 0; }
+.resultName { font-size: 0.875rem; font-weight: 500; color: var(--color-slate-light); }
+.resultMeta { font-size: 0.75rem; color: var(--color-slate); margin-top: 0.125rem; }
+.confirmed { color: var(--color-success); }
+.likely { color: var(--color-warning); }
+.possible { color: var(--color-slate); }
+.closeBtn { display: flex; align-items: center; gap: 0.375rem; padding: 0.375rem 0.75rem; border-radius: 0.5rem; border: 1px solid var(--color-midnight-border); background: none; color: var(--color-slate); font-size: 0.75rem; cursor: pointer; transition: border-color 0.15s, color 0.15s; }
+.closeBtn:hover { border-color: var(--color-danger); color: var(--color-danger); }
+.empty { padding: 2rem; border-radius: 0.75rem; border: 1px dashed var(--color-midnight-border); text-align: center; font-size: 0.875rem; color: var(--color-slate); }

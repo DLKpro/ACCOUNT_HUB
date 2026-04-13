@@ -1,0 +1,36 @@
+.page { max-width: 56rem; }
+.header { margin-bottom: 2rem; }
+.title { font-size: 1.5rem; font-weight: 600; color: white; margin: 0; }
+.subtitle { margin-top: 0.25rem; font-size: 0.875rem; color: var(--color-slate); }
+.error { padding: 0.75rem 1rem; border-radius: 0.75rem; background-color: color-mix(in srgb, var(--color-danger) 10%, transparent); color: var(--color-danger); font-size: 0.875rem; margin-bottom: 1.5rem; }
+.section { margin-bottom: 2rem; }
+.sectionTitle { margin: 0 0 0.75rem; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-slate); }
+.providerGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
+@media (max-width: 640px) { .providerGrid { grid-template-columns: repeat(2, 1fr); } }
+.providerCard { display: flex; align-items: center; gap: 0.75rem; padding: 1rem; border-radius: 0.75rem; border: 1px solid var(--color-midnight-border); background-color: var(--color-midnight-light); color: var(--color-slate-light); font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: border-color 0.15s; }
+.providerCard:hover:not(:disabled) { border-color: color-mix(in srgb, var(--color-teal) 30%, transparent); }
+.providerCard:disabled { opacity: 0.5; cursor: not-allowed; }
+.providerDot { width: 0.5rem; height: 0.5rem; border-radius: 50%; flex-shrink: 0; }
+.providerArrow { margin-left: auto; color: var(--color-slate); }
+.deviceCodeCard { padding: 1.5rem; border-radius: 0.75rem; border: 1px solid color-mix(in srgb, var(--color-teal) 30%, transparent); background-color: var(--color-midnight-light); margin-bottom: 1.5rem; }
+.deviceCodeTitle { margin: 0 0 0.5rem; font-size: 1rem; font-weight: 600; color: white; text-transform: capitalize; }
+.deviceCodeText { margin: 0 0 1rem; font-size: 0.875rem; color: var(--color-slate-light); }
+.deviceCodeLink { color: var(--color-teal); text-decoration: underline; }
+.deviceCodeValue { display: inline-block; padding: 0.75rem 1.5rem; border-radius: 0.5rem; background-color: var(--color-midnight-lighter); font-size: 1.5rem; font-weight: 700; letter-spacing: 0.15em; color: var(--color-teal); font-family: monospace; margin-bottom: 1rem; }
+.deviceCodeActions { display: flex; gap: 0.75rem; }
+.pollBtn { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; background-color: var(--color-teal); color: var(--color-midnight); font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: background-color 0.15s; }
+.pollBtn:hover { background-color: var(--color-teal-hover); }
+.pollBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+.cancelBtn { padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid var(--color-midnight-border); background: none; color: var(--color-slate); font-size: 0.875rem; cursor: pointer; transition: border-color 0.15s; }
+.cancelBtn:hover { border-color: var(--color-slate); }
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.emailList { display: flex; flex-direction: column; gap: 0.5rem; }
+.emailRow { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-radius: 0.75rem; border: 1px solid var(--color-midnight-border); background-color: var(--color-midnight-light); }
+.emailInfo { display: flex; align-items: center; gap: 0.75rem; }
+.emailIcon { color: var(--color-teal); flex-shrink: 0; }
+.emailAddress { font-size: 0.875rem; color: var(--color-slate-light); font-weight: 500; }
+.emailMeta { font-size: 0.75rem; color: var(--color-slate); margin-top: 0.125rem; }
+.unlinkBtn { padding: 0.5rem; border-radius: 0.5rem; background: none; border: none; color: var(--color-slate); cursor: pointer; transition: background-color 0.15s, color 0.15s; }
+.unlinkBtn:hover { background-color: var(--color-midnight-lighter); color: var(--color-danger); }
+.empty { padding: 2rem; border-radius: 0.75rem; border: 1px dashed var(--color-midnight-border); text-align: center; font-size: 0.875rem; color: var(--color-slate); }

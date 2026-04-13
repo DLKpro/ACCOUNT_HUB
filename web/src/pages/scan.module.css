@@ -1,0 +1,22 @@
+.page { max-width: 56rem; }
+.header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 2rem; }
+.title { font-size: 1.5rem; font-weight: 600; color: white; margin: 0; }
+.subtitle { margin-top: 0.25rem; font-size: 0.875rem; color: var(--color-slate); }
+.scanBtn { display: flex; align-items: center; gap: 0.5rem; padding: 0.625rem 1.25rem; border-radius: 0.75rem; border: none; background-color: var(--color-teal); color: var(--color-midnight); font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: background-color 0.15s; }
+.scanBtn:hover { background-color: var(--color-teal-hover); }
+.scanBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+.message { padding: 0.75rem 1rem; border-radius: 0.75rem; background-color: color-mix(in srgb, var(--color-teal) 10%, transparent); color: var(--color-teal); font-size: 0.875rem; margin-bottom: 1.5rem; }
+.section { margin-bottom: 2rem; }
+.sectionTitle { margin: 0 0 0.75rem; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-slate); }
+.scanList { display: flex; flex-direction: column; gap: 0.5rem; }
+.scanRow { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-radius: 0.75rem; border: 1px solid var(--color-midnight-border); background-color: var(--color-midnight-light); text-decoration: none; transition: border-color 0.15s; }
+.scanRow:hover { border-color: color-mix(in srgb, var(--color-teal) 30%, transparent); }
+.scanInfo { display: flex; align-items: center; gap: 0.75rem; }
+.scanIcon { color: var(--color-teal); flex-shrink: 0; }
+.scanText { font-size: 0.875rem; color: var(--color-slate-light); }
+.accent { color: var(--color-teal); }
+.scanMeta { font-size: 0.75rem; color: var(--color-slate); margin-top: 0.125rem; }
+.statusDone { color: var(--color-success); }
+.statusPending { color: var(--color-warning); }
+.arrow { color: var(--color-slate); }
+.empty { padding: 2rem; border-radius: 0.75rem; border: 1px dashed var(--color-midnight-border); text-align: center; font-size: 0.875rem; color: var(--color-slate); }

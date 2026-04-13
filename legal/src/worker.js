@@ -1,6 +1,143 @@
 // AccountHub Legal Pages Worker
 // Serves Terms of Service and Privacy Policy
 
+const SHARED_STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Outfit', system-ui, sans-serif;
+    color: #D8EAF6;
+    background: #060F1E;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  a { color: #2DD4BF; transition: color 0.15s; }
+  a:hover { color: #5EEAD4; }
+  header {
+    background: #0D2137;
+    border-bottom: 1px solid #1E3054;
+    padding: 1rem 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  header .inner {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  header .logo {
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: #2DD4BF;
+    text-decoration: none;
+    letter-spacing: -0.03em;
+  }
+  header nav a {
+    color: #5A8FAE;
+    text-decoration: none;
+    font-size: 0.9rem;
+    margin-left: 1.5rem;
+    transition: color 0.15s;
+  }
+  header nav a:hover { color: #D8EAF6; }
+  header nav a.active { color: #2DD4BF; }
+  main {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 3rem 2rem 5rem;
+  }
+  .doc-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    padding-bottom: 2rem;
+    border-bottom: 2px solid #1E3054;
+  }
+  .doc-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: #E6F0FA;
+  }
+  .doc-header .subtitle {
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: #2DD4BF;
+    margin-bottom: 0.75rem;
+  }
+  .doc-header .effective {
+    font-size: 0.9rem;
+    color: #5A8FAE;
+  }
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #E6F0FA;
+    margin-top: 2.25rem;
+    margin-bottom: 0.75rem;
+  }
+  h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #D8EAF6;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+  p { margin-bottom: 1rem; color: #D8EAF6; }
+  ul {
+    margin: 0.5rem 0 1rem 1.5rem;
+    color: #D8EAF6;
+  }
+  ul li {
+    margin-bottom: 0.4rem;
+    padding-left: 0.25rem;
+  }
+  ul li strong { color: #E6F0FA; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0 1.5rem;
+    font-size: 0.95rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border: 1px solid #1E3054;
+    color: #D8EAF6;
+  }
+  th {
+    background: #132240;
+    font-weight: 600;
+    color: #E6F0FA;
+  }
+  tr:nth-child(even) td { background: #0D2137; }
+  .contact-block {
+    background: #0D2137;
+    border: 1px solid #1E3054;
+    border-radius: 0.75rem;
+    padding: 1.25rem 1.5rem;
+    margin-top: 1rem;
+  }
+  .contact-block p { margin-bottom: 0.35rem; }
+  .contact-block strong { color: #E6F0FA; }
+  footer {
+    text-align: center;
+    padding: 2rem;
+    color: #5A8FAE;
+    font-size: 0.85rem;
+    border-top: 1px solid #1E3054;
+  }
+  @media (max-width: 640px) {
+    main { padding: 2rem 1.25rem 3rem; }
+    .doc-header h1 { font-size: 1.5rem; }
+    table { font-size: 0.85rem; }
+    th, td { padding: 0.5rem 0.65rem; }
+  }
+`;
+
 const TERMS_HTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,106 +145,7 @@ const TERMS_HTML = `<!DOCTYPE html>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Terms of Service — AccountHub</title>
   <meta name="description" content="AccountHub Terms of Service. Read about the terms and conditions governing your use of the AccountHub application.">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      color: #1a1a2e;
-      background: #f8f9fb;
-      line-height: 1.7;
-      -webkit-font-smoothing: antialiased;
-    }
-    header {
-      background: #fff;
-      border-bottom: 1px solid #e5e7eb;
-      padding: 1rem 2rem;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-    header .inner {
-      max-width: 800px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    header .logo {
-      font-weight: 700;
-      font-size: 1.15rem;
-      color: #1a1a2e;
-      text-decoration: none;
-    }
-    header nav a {
-      color: #555;
-      text-decoration: none;
-      font-size: 0.9rem;
-      margin-left: 1.5rem;
-      transition: color 0.2s;
-    }
-    header nav a:hover, header nav a.active { color: #2563eb; }
-    main {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 3rem 2rem 5rem;
-    }
-    .doc-header {
-      text-align: center;
-      margin-bottom: 2.5rem;
-      padding-bottom: 2rem;
-      border-bottom: 2px solid #e5e7eb;
-    }
-    .doc-header h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      margin-bottom: 0.25rem;
-      color: #1a1a2e;
-    }
-    .doc-header .subtitle {
-      font-size: 1.35rem;
-      font-weight: 600;
-      color: #374151;
-      margin-bottom: 0.75rem;
-    }
-    .doc-header .effective {
-      font-size: 0.9rem;
-      color: #6b7280;
-    }
-    h2 {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: #1a1a2e;
-      margin-top: 2.25rem;
-      margin-bottom: 0.75rem;
-    }
-    p { margin-bottom: 1rem; color: #374151; }
-    ul {
-      margin: 0.5rem 0 1rem 1.5rem;
-      color: #374151;
-    }
-    ul li {
-      margin-bottom: 0.4rem;
-      padding-left: 0.25rem;
-    }
-    .contact-block {
-      background: #f1f5f9;
-      border-radius: 8px;
-      padding: 1.25rem 1.5rem;
-      margin-top: 1rem;
-    }
-    .contact-block p { margin-bottom: 0.35rem; }
-    footer {
-      text-align: center;
-      padding: 2rem;
-      color: #9ca3af;
-      font-size: 0.85rem;
-      border-top: 1px solid #e5e7eb;
-    }
-    @media (max-width: 640px) {
-      main { padding: 2rem 1.25rem 3rem; }
-      .doc-header h1 { font-size: 1.5rem; }
-    }
-  </style>
+  <style>${SHARED_STYLES}</style>
 </head>
 <body>
   <header>
@@ -221,133 +259,7 @@ const PRIVACY_HTML = `<!DOCTYPE html>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Privacy Policy — AccountHub</title>
   <meta name="description" content="AccountHub Privacy Policy. Learn how we collect, use, and protect your personal information.">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      color: #1a1a2e;
-      background: #f8f9fb;
-      line-height: 1.7;
-      -webkit-font-smoothing: antialiased;
-    }
-    header {
-      background: #fff;
-      border-bottom: 1px solid #e5e7eb;
-      padding: 1rem 2rem;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-    header .inner {
-      max-width: 800px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    header .logo {
-      font-weight: 700;
-      font-size: 1.15rem;
-      color: #1a1a2e;
-      text-decoration: none;
-    }
-    header nav a {
-      color: #555;
-      text-decoration: none;
-      font-size: 0.9rem;
-      margin-left: 1.5rem;
-      transition: color 0.2s;
-    }
-    header nav a:hover, header nav a.active { color: #2563eb; }
-    main {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 3rem 2rem 5rem;
-    }
-    .doc-header {
-      text-align: center;
-      margin-bottom: 2.5rem;
-      padding-bottom: 2rem;
-      border-bottom: 2px solid #e5e7eb;
-    }
-    .doc-header h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      margin-bottom: 0.25rem;
-      color: #1a1a2e;
-    }
-    .doc-header .subtitle {
-      font-size: 1.35rem;
-      font-weight: 600;
-      color: #374151;
-      margin-bottom: 0.75rem;
-    }
-    .doc-header .effective {
-      font-size: 0.9rem;
-      color: #6b7280;
-    }
-    h2 {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: #1a1a2e;
-      margin-top: 2.25rem;
-      margin-bottom: 0.75rem;
-    }
-    h3 {
-      font-size: 1.05rem;
-      font-weight: 600;
-      color: #374151;
-      margin-top: 1.5rem;
-      margin-bottom: 0.5rem;
-    }
-    p { margin-bottom: 1rem; color: #374151; }
-    ul {
-      margin: 0.5rem 0 1rem 1.5rem;
-      color: #374151;
-    }
-    ul li {
-      margin-bottom: 0.4rem;
-      padding-left: 0.25rem;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 1rem 0 1.5rem;
-      font-size: 0.95rem;
-    }
-    th, td {
-      text-align: left;
-      padding: 0.75rem 1rem;
-      border: 1px solid #e5e7eb;
-      color: #374151;
-    }
-    th {
-      background: #e8f0fe;
-      font-weight: 600;
-      color: #1a1a2e;
-    }
-    tr:nth-child(even) td { background: #fafbfc; }
-    .contact-block {
-      background: #f1f5f9;
-      border-radius: 8px;
-      padding: 1.25rem 1.5rem;
-      margin-top: 1rem;
-    }
-    .contact-block p { margin-bottom: 0.35rem; }
-    footer {
-      text-align: center;
-      padding: 2rem;
-      color: #9ca3af;
-      font-size: 0.85rem;
-      border-top: 1px solid #e5e7eb;
-    }
-    @media (max-width: 640px) {
-      main { padding: 2rem 1.25rem 3rem; }
-      .doc-header h1 { font-size: 1.5rem; }
-      table { font-size: 0.85rem; }
-      th, td { padding: 0.5rem 0.65rem; }
-    }
-  </style>
+  <style>${SHARED_STYLES}</style>
 </head>
 <body>
   <header>

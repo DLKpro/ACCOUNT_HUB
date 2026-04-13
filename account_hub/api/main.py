@@ -10,7 +10,7 @@ from slowapi.errors import RateLimitExceeded
 
 from account_hub.api.limiter import limiter
 from account_hub.api.routers import accounts, auth, emails, oauth, search
-from account_hub.db.base import engine
+from account_hub.db.base import Base, engine
 
 logger = logging.getLogger("account_hub")
 
@@ -24,6 +24,12 @@ async def lifespan(app: FastAPI):
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     logger.info("Account Hub API starting")
+
+    # Auto-create tables if they don't exist
+    from account_hub.db import models  # noqa: F401
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    logger.info("Database tables ensured")
 
     # Register OAuth providers on startup
     from account_hub.oauth.apple import setup_apple

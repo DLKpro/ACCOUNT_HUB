@@ -44,7 +44,33 @@ allow = [
 ]
 # Confidence threshold for license detection (0.0 to 1.0). Higher = stricter.
 confidence-threshold = 0.92
-exceptions = []
+
+# Per-crate license exemptions.
+#
+# Policy (per docs/quality-gates.md §7 risk j): MPL-2.0 and other non-default licenses
+# are NEVER blanket-added to the `allow` list above. Each crate is listed individually
+# with an inline justification so a future reviewer can see exactly what was approved
+# and on what grounds. If a new version of one of these crates introduces a different
+# license or the crate begins modifying its upstream, re-review is required.
+#
+# MPL-2.0 is "weak copyleft" (file-level): obligations apply only to modifications of
+# the MPL-licensed files themselves and their redistribution. Using these crates as
+# unmodified library dependencies — as we do in every case below — incurs only the
+# standard attribution obligation, which Tauri's release-build attribution machinery
+# handles. Re-review trigger: if we ever vendor, patch, or fork any of these.
+exceptions = [
+    # cssparser / cssparser-macros / dtoa-short / selectors: Servo's CSS parser family.
+    # Pulled via kuchikiki (HTML rewriter used by tauri-utils for asset/link processing
+    # during bundling). We never touch these sources directly.
+    { allow = ["MPL-2.0"], name = "cssparser" },
+    { allow = ["MPL-2.0"], name = "cssparser-macros" },
+    { allow = ["MPL-2.0"], name = "dtoa-short" },
+    { allow = ["MPL-2.0"], name = "selectors" },
+
+    # option-ext: ~2-line helper crate by the `dirs` author. Pulled via dirs-sys for
+    # platform-standard paths (config/data/cache dirs). Used unmodified.
+    { allow = ["MPL-2.0"], name = "option-ext" },
+]
 
 # Internal workspace crates use `license = "Proprietary"`, which is not a valid SPDX
 # expression. Since all three carry `publish = false`, exempt them from the license check.

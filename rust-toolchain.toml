@@ -1,0 +1,6 @@
+# Pins the Rust toolchain for every contributor and CI job.
+# Bump deliberately; document reason in the commit message.
+[toolchain]
+channel = "1.85.0"
+components = ["rustfmt", "clippy"]
+profile = "minimal"

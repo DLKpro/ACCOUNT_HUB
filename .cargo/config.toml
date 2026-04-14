@@ -1,0 +1,12 @@
+# Workspace-level cargo build config.
+# Reserved for target-specific rustflags as the migration progresses.
+# Currently empty of custom flags; the presence of this file is a stub so
+# future additions (sanitizers in CI, per-target linkers) land in the right place.
+
+[build]
+# Keep defaults for now.
+
+# Placeholder — per-target rustflags for hardening go here when relevant.
+# Example (not active):
+# [target.'cfg(target_os = "macos")']
+# rustflags = ["-C", "link-arg=-Wl,-pie"]

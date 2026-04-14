@@ -1,0 +1,29 @@
+[package]
+name = "account-hub-gui"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "ACCOUNT_HUB desktop GUI — Tauri 2 shell wrapping the React SPA."
+
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+core = { workspace = true }
+tokio = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+# Tauri 2 added when docs/design/05-tauri-ipc.md is accepted.
+# For Phase 0, this crate is a minimal bin that links against `core` to prove the workspace
+# compiles. Swapping the stub main for a `tauri::Builder` chain is a clean diff later.
+
+[[bin]]
+name = "account-hub-gui"
+path = "src/main.rs"

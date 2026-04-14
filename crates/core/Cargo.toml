@@ -1,0 +1,35 @@
+[package]
+name = "account-hub-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "ACCOUNT_HUB shared core: vault, keychain, OAuth, mail, discovery, closure."
+
+# Internal crate — never published.
+publish = false
+
+[lints]
+workspace = true
+
+[features]
+default = []
+# Fake implementations for tests (see docs/design/01-workspace-architecture.md §Testing shape).
+test-utils = []
+
+[dependencies]
+thiserror = { workspace = true }
+tokio = { workspace = true }
+zeroize = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+
+# argon2 pulled in when crypto/ gains real code (design 03 onwards).
+
+[dev-dependencies]
+proptest = { workspace = true }
+tokio = { workspace = true, features = ["test-util"] }
+tracing-subscriber = { workspace = true }

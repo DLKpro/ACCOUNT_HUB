@@ -1,0 +1,90 @@
+# Workspace root for ACCOUNT_HUB desktop migration.
+# See docs/design/01-workspace-architecture.md for the architecture spec
+# and ~/.claude/plans/woolly-coalescing-dragon.md for the phased migration plan.
+
+[workspace]
+resolver = "2"
+members = [
+    "crates/core",
+    "crates/gui",
+    "crates/cli",
+]
+
+[workspace.package]
+version = "0.0.1"
+edition = "2021"
+rust-version = "1.85"
+license = "Proprietary"
+authors = ["ACCOUNT_HUB contributors"]
+repository = "https://github.com/DLKpro/ACCOUNT_HUB"
+
+[workspace.dependencies]
+# --- Error handling ---
+thiserror = "2"
+anyhow = "1"            # binaries only; forbidden in core (see design 01)
+
+# --- Async runtime ---
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "fs", "time"] }
+
+# --- Crypto / secrets ---
+zeroize = { version = "1", features = ["zeroize_derive"] }
+argon2 = { version = "0.5", features = ["std"] }
+
+# --- Serialization ---
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# --- Logging / diagnostics ---
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# --- Testing ---
+proptest = "1"
+
+# --- Pinned internal crates ---
+core = { path = "crates/core", package = "account-hub-core" }
+
+# NOTE: dependencies pulled in later phases (rusqlite+sqlcipher, keyring, oauth2, reqwest,
+# tauri, clap, specta/ts-rs) are added when their subsystem design is accepted. Adding a dep
+# here before the design is accepted is a process violation per quality-gates.md §2.
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+panic = "abort"
+overflow-checks = true
+
+[profile.dev]
+opt-level = 0
+debug = true
+
+[profile.test]
+opt-level = 1
+
+# --- Workspace-level lint config ---
+# Applied to every workspace member unless overridden.
+# Lint groups (e.g. rust_2018_idioms) carry `priority = -1` so individual lints can override.
+[workspace.lints.rust]
+unsafe_code = "deny"        # core must not use unsafe; binaries may override per-file if needed
+missing_docs = "warn"        # public APIs should be documented
+rust_2018_idioms = { level = "warn", priority = -1 }
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+# Explicit denies for security-adjacent footguns:
+unwrap_used = "warn"
+expect_used = "warn"
+panic = "warn"
+todo = "warn"
+dbg_macro = "deny"
+print_stdout = "warn"        # use tracing instead
+print_stderr = "warn"
+
+# Pragmatic allows (pedantic is noisy):
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"

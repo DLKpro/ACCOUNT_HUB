@@ -1,0 +1,33 @@
+[package]
+name = "account-hub-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "ACCOUNT_HUB CLI — clap-based binary sharing `core` with the desktop GUI."
+
+publish = false
+
+[lints]
+workspace = true
+
+[features]
+default = ["keyfile-fallback"]
+# age-encrypted keyfile unlock for headless Linux hosts without libsecret.
+# Design detail lands in docs/design/02-keychain-abstraction.md (pending).
+keyfile-fallback = []
+
+[dependencies]
+core = { workspace = true }
+tokio = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+# clap added when CLI command surface is specified (alongside oauth provider design).
+
+[[bin]]
+name = "account-hub"
+path = "src/main.rs"

@@ -53,7 +53,7 @@ Subsystem design order (ground up; each constrains the next):
 1. ✅ `docs/design/01-workspace-architecture.md` — Cargo workspace + crate boundaries (accepted, ADR 0001)
 2. ✅ `docs/design/02-keychain-abstraction.md` — `SecretStore` trait + per-OS impls + keyfile fallback (accepted, ADR 0002)
 3. ✅ `docs/design/03-vault.md` — SQLCipher schema, KEK wrap, WAL, multi-process access (accepted, ADR 0003)
-4. `docs/design/04-oauth-providers.md` — `Provider` trait, loopback+PKCE, Apple relay, token lifecycle
+4. ✅ `docs/design/04-oauth-providers.md` — `Provider` trait, loopback+PKCE, Apple relay, token lifecycle (accepted, ADR 0004)
 5. `docs/design/05-tauri-ipc.md` — command shapes, error envelope, type-sharing with frontend
 
 Design docs reference back to the plan and are updated if decisions shift.
@@ -204,6 +204,7 @@ months from now, the decision needs an ADR.
 | 2026-04-13 | §7 Supply chain / cargo-deny | Pinned workspace `core` dep with `version = "=0.0.1"` alongside `path`. cargo-deny's wildcard check treats version-less path deps as wildcards; the pinned version keeps `wildcards = "deny"` strict for external deps. | Idiomatic for workspace-internal crates that may be published later |
 | 2026-04-13 | Design doc 02 accepted | `docs/design/02-keychain-abstraction.md` + ADR 0002: async `SecretStore` trait, typed `SecretKey` constants, four production backends (`MacosKeychain` / `WindowsCredentialManager` / `LinuxSecretService` / `AgeKeyfile`) + `FakeKeychain` for tests. GUI never falls back to keyfile; CLI opts in via `--keyfile`. No biometric trait methods in v1. `panic = "abort"` accepted as out-of-scope for cold-boot memory attacks. First `AgeKeyfile` identity to ship = X25519 file. | Second in the ground-up design order; unblocks vault design 03 |
 | 2026-04-13 | Design doc 03 accepted | `docs/design/03-vault.md` + ADR 0003 + `crates/core/migrations/V0001__initial.sql`: SQLCipher via rusqlite + bundled-sqlcipher; single connection per vault serialized by `parking_lot::Mutex`; async bridge via `tokio::task::spawn_blocking`; WAL + `fs2` exclusive lock for rekey/migration; `refinery` for migrations; five surviving tables (`linked_email`, `oauth_state`, `scan_session`, `discovered_account`, `closure_request`); three auth-only tables retired not ported; no per-column encryption (SQLCipher whole-file is the answer); INTEGER unix-seconds timestamps; no user_id columns (single-user vault). | Third in the ground-up design order; centerpiece of the app's security posture |
+| 2026-04-13 | Design doc 04 accepted | `docs/design/04-oauth-providers.md` + ADR 0004: narrow `Provider` trait (4 methods + optional `revoke`); shared `OAuthFlow` orchestrator owns PKCE/state/nonce/loopback/vault; Microsoft switched from device-code to loopback+PKCE (device-code kept as corp-tenant fallback); Apple client secret is an ES256-signed JWT with 3-minute exp (not 6 months); Apple Worker relay cert-pinned via SHA-256 SPKI; state carries `:<loopback-port>` for Worker routing; `hyper` directly for loopback server (not axum); one shared `reqwest::Client` with rustls + webpki-roots; tokens carried as `SecretString` end-to-end; refresh scheduler runs under `UnlockedSession`. | Fourth in the ground-up design order; unblocks Phase 3 Rust OAuth port |
 
 ---
 

@@ -1,0 +1,57 @@
+# cargo-deny policy. Referenced by .github/workflows/rust.yml.
+# Docs: https://embarkstudios.github.io/cargo-deny/
+
+[graph]
+# Check every target we ship for (macOS + Windows + Linux, all x86_64 and aarch64).
+targets = [
+  { triple = "x86_64-apple-darwin" },
+  { triple = "aarch64-apple-darwin" },
+  { triple = "x86_64-pc-windows-msvc" },
+  { triple = "x86_64-unknown-linux-gnu" },
+  { triple = "aarch64-unknown-linux-gnu" },
+]
+all-features = true
+
+[advisories]
+version = 2
+# cargo-audit handles the advisory feed in its own job; having it here too would be redundant
+# and noisy on double-hits. Leave the section so schema-version is pinned, but no rules.
+ignore = []
+
+[licenses]
+version = 2
+# Allowlist. Anything outside fails the build — we have to consciously approve new licenses.
+# The set below covers the common permissive + corporate-friendly licenses seen in the Rust
+# ecosystem. BSL / AGPL / GPL are deliberately absent — flag them for human review.
+allow = [
+  "Apache-2.0",
+  "Apache-2.0 WITH LLVM-exception",
+  "MIT",
+  "MIT-0",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "ISC",
+  "Unicode-3.0",
+  "Unicode-DFS-2016",
+  "CC0-1.0",
+  "0BSD",
+  "Zlib",
+]
+# Confidence threshold for license detection (0.0 to 1.0). Higher = stricter.
+confidence-threshold = 0.92
+exceptions = []
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+# No dep in this workspace should exist that we don't want. Populate as concerns arise.
+deny = []
+# Skip known-duplicate trees that are fine (populate if a specific dup emerges).
+skip = []
+skip-tree = []
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []

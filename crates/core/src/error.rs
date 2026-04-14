@@ -1,7 +1,7 @@
 //! Unified error type for `account-hub-core`.
 //!
-//! Library callers match on [`Error`]. Per-module errors (`VaultError`, `OAuthError`, …)
-//! live inside their modules and are wrapped here via `#[from]`.
+//! Library callers match on [`Error`](enum@Error). Per-module errors (`VaultError`,
+//! `OAuthError`, …) live inside their modules and are wrapped here via `#[from]`.
 //!
 //! **Rule:** Error `Display` impls must never include secret material (tokens, keys,
 //! master-password bytes). This is enforced by code review, not by a lint.

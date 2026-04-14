@@ -50,8 +50,8 @@ The spec covers:
 
 Subsystem design order (ground up; each constrains the next):
 
-1. `docs/design/01-workspace-architecture.md` — Cargo workspace + crate boundaries
-2. `docs/design/02-keychain-abstraction.md` — `SecretStore` trait + per-OS impls + keyfile fallback
+1. ✅ `docs/design/01-workspace-architecture.md` — Cargo workspace + crate boundaries (accepted, ADR 0001)
+2. ✅ `docs/design/02-keychain-abstraction.md` — `SecretStore` trait + per-OS impls + keyfile fallback (accepted, ADR 0002)
 3. `docs/design/03-vault.md` — SQLCipher schema, KEK wrap, WAL, multi-process access
 4. `docs/design/04-oauth-providers.md` — `Provider` trait, loopback+PKCE, Apple relay, token lifecycle
 5. `docs/design/05-tauri-ipc.md` — command shapes, error envelope, type-sharing with frontend
@@ -202,6 +202,7 @@ months from now, the decision needs an ADR.
 | 2026-04-13 | §7 Supply chain / cargo-deny | Pinned `cargo-deny` to 0.18.3 and scoped its `check` subcommand to `licenses bans sources` (not the full `check`). Reason: 0.19+ requires Rust 1.88.0, newer than the pinned 1.85.0; 0.18 can't parse CVSS 4.0 advisory entries. `cargo-audit` runs in a separate job and is the sole source of truth for advisories. Revisit when the toolchain moves to 1.88+ | Upstream toolchain-version skew; ADR unnecessary since it's a pin / config scoping, not a design divergence |
 | 2026-04-13 | §7 Supply chain / cargo-deny | Added `[licenses.private] ignore = true` to `deny.toml`. The three workspace crates use `license = "Proprietary"` (not SPDX); all are `publish = false`. The directive exempts our own non-published crates from license scrutiny without loosening third-party license requirements. | Idiomatic cargo-deny config for workspace-internal crates |
 | 2026-04-13 | §7 Supply chain / cargo-deny | Pinned workspace `core` dep with `version = "=0.0.1"` alongside `path`. cargo-deny's wildcard check treats version-less path deps as wildcards; the pinned version keeps `wildcards = "deny"` strict for external deps. | Idiomatic for workspace-internal crates that may be published later |
+| 2026-04-13 | Design doc 02 accepted | `docs/design/02-keychain-abstraction.md` + ADR 0002: async `SecretStore` trait, typed `SecretKey` constants, four production backends (`MacosKeychain` / `WindowsCredentialManager` / `LinuxSecretService` / `AgeKeyfile`) + `FakeKeychain` for tests. GUI never falls back to keyfile; CLI opts in via `--keyfile`. No biometric trait methods in v1. `panic = "abort"` accepted as out-of-scope for cold-boot memory attacks. First `AgeKeyfile` identity to ship = X25519 file. | Second in the ground-up design order; unblocks vault design 03 |
 
 ---
 

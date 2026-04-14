@@ -13,7 +13,7 @@ members = [
 [workspace.package]
 version = "0.0.1"
 edition = "2021"
-rust-version = "1.85"
+rust-version = "1.94"
 license = "Proprietary"
 authors = ["ACCOUNT_HUB contributors"]
 repository = "https://github.com/DLKpro/ACCOUNT_HUB"
@@ -42,9 +42,11 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 proptest = "1"
 
 # --- Pinned internal crates ---
+# The import name `account_hub_core` (not `core`) avoids shadowing stdlib `core`, which
+# breaks proc macros (e.g. tauri::generate_context!) that reference `core::option::Option`.
 # Explicit version on the path dep so cargo-deny's wildcard check sees a concrete version.
 # Internal workspace crate; bump the version alongside the workspace `version` field.
-core = { path = "crates/core", package = "account-hub-core", version = "=0.0.1" }
+account_hub_core = { path = "crates/core", package = "account-hub-core", version = "=0.0.1" }
 
 # NOTE: dependencies pulled in later phases (rusqlite+sqlcipher, keyring, oauth2, reqwest,
 # tauri, clap, specta/ts-rs) are added when their subsystem design is accepted. Adding a dep

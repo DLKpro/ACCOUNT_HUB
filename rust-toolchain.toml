@@ -1,6 +1,10 @@
 # Pins the Rust toolchain for every contributor and CI job.
 # Bump deliberately; document reason in the commit message.
+#
+# 1.94.1 — bumped from 1.85.0 (original Phase 0 pin) because Tauri 2's transitive deps
+# (icu_*, serde_with, time) require ≥1.88. Side benefit: unpins cargo-deny from 0.18.3
+# (which was itself pinned because 0.19+ required 1.88+). See docs/quality-gates.md §10.
 [toolchain]
-channel = "1.85.0"
+channel = "1.94.1"
 components = ["rustfmt", "clippy"]
 profile = "minimal"

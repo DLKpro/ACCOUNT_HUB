@@ -14,15 +14,18 @@ publish = false
 workspace = true
 
 [dependencies]
-core = { workspace = true }
+account_hub_core = { workspace = true }
 tokio = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 
-# Tauri 2 added when docs/design/05-tauri-ipc.md is accepted.
-# For Phase 0, this crate is a minimal bin that links against `core` to prove the workspace
-# compiles. Swapping the stub main for a `tauri::Builder` chain is a clean diff later.
+# Tauri 2 shell. Plugins (dialog, shell, deep-link, notification) arrive alongside the IPC
+# commands that use them (Phase 3 per docs/design/05-tauri-ipc.md §Capability model).
+tauri = { version = "2", features = [] }
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
 
 [[bin]]
 name = "account-hub-gui"

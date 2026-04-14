@@ -20,7 +20,7 @@ default = ["keyfile-fallback"]
 keyfile-fallback = []
 
 [dependencies]
-core = { workspace = true }
+account_hub_core = { workspace = true }
 tokio = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }

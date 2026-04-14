@@ -1,0 +1,18 @@
+{
+  "name": "accounthub",
+  "private": true,
+  "version": "0.0.1",
+  "description": "ACCOUNT_HUB desktop workspace root — delegates to web/ for frontend scripts and to @tauri-apps/cli for the Tauri shell.",
+  "scripts": {
+    "frontend:dev": "npm --prefix web run dev",
+    "frontend:build": "npm --prefix web run build",
+    "frontend:install": "npm --prefix web install",
+    "tauri": "tauri --config ./crates/gui/tauri.conf.json",
+    "tauri:dev": "tauri --config ./crates/gui/tauri.conf.json dev",
+    "tauri:build": "tauri --config ./crates/gui/tauri.conf.json build",
+    "tauri:icon": "tauri --config ./crates/gui/tauri.conf.json icon"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.1.0"
+  }
+}

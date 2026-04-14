@@ -48,7 +48,7 @@ jobs:
       - name: Install Rust toolchain (per rust-toolchain.toml)
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: "1.85.0"
+          toolchain: "1.94.1"
           components: rustfmt, clippy
 
       - name: Cache cargo build artifacts
@@ -77,7 +77,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: "1.85.0"
+          toolchain: "1.94.1"
 
       - name: Install cargo-audit
         uses: taiki-e/install-action@v2
@@ -96,7 +96,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: "1.85.0"
+          toolchain: "1.94.1"
 
       - name: Install cargo-deny
         uses: taiki-e/install-action@v2

@@ -170,7 +170,7 @@ months from now, the decision needs an ADR.
 | Phase | Status | Exit criteria met | Tag | Notes |
 |---|---|---|---|---|
 | Pre-Phase-0 (Worker extract) | Not started | — | — | Depends on new GitHub repo (user) |
-| Phase 0 (Scaffold + procurement) | In progress | 3/4 | — | Scaffold + local CI + Tauri dev loop all green; only procurement + threat-model review outstanding |
+| Phase 0 (Scaffold + procurement) | In progress | code-side complete | — | Scaffold + local CI + CI-on-actual-PR + Tauri dev loop all green; only procurement + threat-model review outstanding |
 | Phase 1 (Hybrid shipping) | Not started | — | — | |
 | Phase 2 (Storage + secrets to Rust) | Not started | — | — | |
 | Phase 3 (Retire Python sidecar, port CLI) | Not started | — | — | |
@@ -184,7 +184,7 @@ months from now, the decision needs an ADR.
 - [x] `cargo fmt --all --check` green.
 - [x] GitHub Actions `rust.yml` written: check + audit + deny + osv-scan on macOS + Windows + Linux.
 - [x] `deny.toml` written with license allowlist + source restrictions.
-- [ ] `rust.yml` proven green on an actual PR (pending — W1 push will be the first trigger).
+- [x] `rust.yml` proven green on an actual PR (W1 push 2026-04-14, run 24420876164 → 6/6 matrix jobs green after Linux system-deps + per-ID advisory ignores landed).
 - [x] Tauri 2 config in `crates/gui/` (b71128a scaffold + W1 path fixes).
 - [x] `npm run tauri:dev` opens the React SPA in a Tauri window (verified 2026-04-14: Vite ready in 243 ms, dev build 12.92 s, `account-hub-gui` binary launched, curl :3000 → HTTP 200).
 - [ ] `docs/desktop-threat-model.md` reviewed at Phase 0 close (scheduled for when other exit items are met).
@@ -217,6 +217,8 @@ months from now, the decision needs an ADR.
 | 2026-04-14 | W1 wrap-up / workspace alias | `Cargo.toml` workspace dep renamed `core` → `account_hub_core`. `core` shadowed the stdlib crate of the same name inside proc-macro expansions (e.g. `tauri::generate_context!` references `core::option::Option`). The explicit alias removes the shadowing without changing the crate-on-disk name (`crates/core/` stays put). | Required for `tauri::generate_context!` to compile; same reason a lot of Rust codebases avoid naming internal crates after stdlib modules |
 | 2026-04-14 | W1 wrap-up / Tauri dev scripts | Two pre-existing bugs in the scaffold blocked `npm run tauri:dev` until actually run: (1) `package.json` placed `--config` before the subcommand (`tauri --config ... dev`) but Tauri 2 makes `--config` a dev/build subcommand flag; reordered to `tauri dev --config ...` and stripped bogus `--config` from `tauri` + `tauri:icon`. (2) `tauri.conf.json` `beforeDevCommand: npm --prefix ../../web run dev` resolved `../../` relative to the tauri CLI's invocation CWD (repo root), not relative to the config file, yielding `/Users/<user>/web/`; changed to `./web`. `frontendDist` stays config-relative — that one is correctly pointed. | Root-cause fix for the "`tauri:dev` never exercised" known issue at session pause |
 | 2026-04-14 | §9 Phase Ledger | Phase 0 exit criteria met moved from 2/4 → 3/4; Tauri config and `tauri:dev` boxes checked. Only procurement + threat-model review remain before Phase 0 close. | Progress tracking |
+| 2026-04-14 | W1 wrap-up / CI hardening | First CI push after Tauri scaffold tripled-failed (check / ubuntu-latest missing Tauri Linux system deps; cargo-audit + osv-scanner denied 19 unique RUSTSEC IDs from Tauri's transitive tree). Root-cause fixes: (1) `apt-get install` step for `libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libsoup-3.0-dev patchelf` on the ubuntu matrix arm; (2) `.cargo/audit.toml` with per-RUSTSEC-ID ignores + rationale (10 gtk-rs GTK3 unmaintained blocked on Tauri GTK4 migration, glib 0.18.5 unsoundness Linux-only/no-call-path, rand 0.7/0.8 build-time phf only, fxhash + proc-macro-error + 5 unic-* unmaintained); (3) `osv-scanner.toml` with `[[IgnoredVulns]]` mirroring audit.toml, wired via `--config=./osv-scanner.toml`. Quarterly review cadence documented in both files. No blanket `--ignore-unmaintained` or similar — every accepted advisory is called out by ID with a re-review trigger. Run 24420876164 went 6/6 green after the fix. | Root-cause fix per §Problem-response protocol; Tauri ecosystem noise must be explicitly acknowledged, not silenced |
+| 2026-04-14 | §9 Phase Ledger | Phase 0 ledger advanced to "code-side complete" (was 3/4); `rust.yml proven green on actual PR` box ticked. Only procurement + threat-model review remain before Phase 0 close. | Reflects the real state post-W1 |
 
 **All five ground-up design docs accepted as of 2026-04-13.** Design-spec work complete;
 subsequent revision-log entries are implementation-driven.

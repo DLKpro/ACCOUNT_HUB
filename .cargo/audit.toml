@@ -1,0 +1,99 @@
+# cargo-audit configuration.
+#
+# Policy (per docs/quality-gates.md §Problem-response protocol + §7 supply chain):
+# every ignored advisory gets an explicit RUSTSEC ID and a rationale comment
+# that a reviewer can evaluate. Blanket "-off" flags are prohibited.
+#
+# Review cadence: quarterly (Jan / Apr / Jul / Oct). Each entry below must be
+# re-validated on review; a re-review that extends the ignore adds a note.
+# If an entry cannot be justified on re-review, the crate must be replaced /
+# upgraded / removed before the ignore is retained.
+#
+# Last reviewed: 2026-04-14 (W1 wrap-up).
+
+[advisories]
+ignore = [
+    # --- gtk-rs GTK3 bindings: unmaintained (gtk-rs is migrating to GTK4) ---
+    #
+    # Tauri 2.x on Linux uses GTK3 via webkit2gtk-4.1. All of these are Linux-only
+    # and transitively pulled through the Tauri → wry → gtk3-rs chain. There is
+    # no action we can take until Tauri 3.x ships GTK4 support; the entries
+    # below all map to the same upstream issue:
+    #   tauri-apps/tauri#10492 — "Migrate Linux backend to GTK4"
+    #
+    # Review trigger: Tauri major version bump, or any new gtk-rs advisory with
+    # an actual CVE / CVSS score (these are all advisory-level unmaintained
+    # warnings without exploit paths).
+    "RUSTSEC-2024-0411",  # gdkwayland-sys: gtk-rs GTK3 unmaintained
+    "RUSTSEC-2024-0412",  # gdk:           gtk-rs GTK3 unmaintained
+    "RUSTSEC-2024-0413",  # atk:           gtk-rs GTK3 unmaintained
+    "RUSTSEC-2024-0414",  # gdkx11-sys:    gtk-rs GTK3 unmaintained
+    "RUSTSEC-2024-0415",  # gtk:           gtk-rs GTK3 unmaintained
+    "RUSTSEC-2024-0416",  # atk-sys:       gtk-rs GTK3 unmaintained
+    "RUSTSEC-2024-0417",  # gdkx11:        gtk-rs GTK3 unmaintained
+    "RUSTSEC-2024-0418",  # gdk-sys:       gtk-rs GTK3 unmaintained
+    "RUSTSEC-2024-0419",  # gtk3-macros:   gtk-rs GTK3 unmaintained
+    "RUSTSEC-2024-0420",  # gtk-sys:       gtk-rs GTK3 unmaintained
+
+    # --- glib 0.18.5 unsoundness (CVSS 6.9) ---
+    #
+    # RUSTSEC-2024-0429: unsound `Iterator` and `DoubleEndedIterator` impls on
+    # glib::VariantStrIter. Fixed in glib 0.20.0; Tauri/webkit2gtk-4.1 pins us
+    # to glib 0.18.x. Exploit path requires calling these iterators with
+    # invalid UTF-8 — we do not call glib directly from our code; the only call
+    # sites are inside webkit2gtk's own process handling of GTK signals,
+    # which receive well-formed UTF-8 from the webview.
+    #
+    # Review trigger: Tauri upgrades its glib pin (tracks with the GTK4 effort
+    # above); or our crates/ ever gain a direct glib::Variant code path.
+    "RUSTSEC-2024-0429",  # glib 0.18.5: unsound VariantStrIter — Linux only, no call path
+
+    # --- rand 0.7.3 + 0.8.5 unsoundness ---
+    #
+    # RUSTSEC-2026-0097: unsoundness when a custom logger installs a panic
+    # handler that calls `rand::rng()`. Fixed in rand 0.9.3. Pulled through
+    # html5ever → phf_generator → phf 0.11 (build-time only: rand is used to
+    # generate perfect hash seeds for the HTML-entity lookup table, not at
+    # runtime). The unsound path is gated on a user-installed panic handler
+    # calling rand, which is not a pattern our code uses.
+    #
+    # Review trigger: phf / html5ever release upgrades to rand 0.9.
+    "RUSTSEC-2026-0097",  # rand: custom-logger unsoundness — build-time phf only
+
+    # --- fxhash: unmaintained ---
+    #
+    # RUSTSEC-2025-0057: fxhash crate is unmaintained. Pulled transitively;
+    # no maintenance risk (hash function, stable behavior, no network or
+    # parsing surface). Recommended migration is to `rustc-hash`, which is
+    # an upstream problem for whichever crate pulls fxhash — not ours.
+    #
+    # Review trigger: any advisory with an actual CVE, or if we ever pull
+    # fxhash directly.
+    "RUSTSEC-2025-0057",  # fxhash: unmaintained — no security surface
+
+    # --- proc-macro-error: unmaintained ---
+    #
+    # RUSTSEC-2024-0370: proc-macro-error 1.0 is unmaintained; replacement is
+    # `proc-macro-error2`. Compile-time only (proc-macro runtime). No security
+    # surface — failure mode is a worse compile-time error message.
+    #
+    # Review trigger: any crate that pulls this upgrades; if our own crates
+    # ever add a direct dep on proc-macro-error (they should not).
+    "RUSTSEC-2024-0370",  # proc-macro-error: unmaintained — compile-time only
+
+    # --- unic-* family: unmaintained ---
+    #
+    # unic-char-property, unic-char-range, unic-common, unic-ucd-ident,
+    # unic-ucd-version — pulled transitively via `idna` / `url` / similar for
+    # Unicode normalization tables. Stable Unicode data; no network or input
+    # surface. Migration path is the `unicode-*` crates (which most of the
+    # ecosystem has already moved to).
+    #
+    # Review trigger: any advisory with an actual CVE, or an `idna`/`url`
+    # version bump drops these from the tree.
+    "RUSTSEC-2025-0075",  # unic-char-range: unmaintained
+    "RUSTSEC-2025-0080",  # unic-common: unmaintained
+    "RUSTSEC-2025-0081",  # unic-char-property: unmaintained
+    "RUSTSEC-2025-0098",  # unic-ucd-version: unmaintained
+    "RUSTSEC-2025-0100",  # unic-ucd-ident: unmaintained
+]

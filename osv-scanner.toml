@@ -1,0 +1,93 @@
+# osv-scanner configuration.
+#
+# Mirrors `.cargo/audit.toml` — same per-ID ignore list with rationale.
+# The two scanners use different feeds but overlap heavily on the Rust
+# ecosystem, so keeping them in lockstep is a source of truth for
+# "advisories we have evaluated and accepted."
+#
+# Policy + review cadence identical to .cargo/audit.toml (quarterly).
+# Last reviewed: 2026-04-14 (W1 wrap-up).
+
+# --- gtk-rs GTK3 bindings: unmaintained ---
+# See .cargo/audit.toml for full rationale. Tauri 2.x on Linux uses GTK3;
+# review trigger is Tauri's GTK4 migration (tauri-apps/tauri#10492).
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0411"
+reason = "gdkwayland-sys: gtk-rs GTK3 unmaintained; blocked on Tauri GTK4"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0412"
+reason = "gdk: gtk-rs GTK3 unmaintained; blocked on Tauri GTK4"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0413"
+reason = "atk: gtk-rs GTK3 unmaintained; blocked on Tauri GTK4"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0414"
+reason = "gdkx11-sys: gtk-rs GTK3 unmaintained; blocked on Tauri GTK4"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0415"
+reason = "gtk: gtk-rs GTK3 unmaintained; blocked on Tauri GTK4"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0416"
+reason = "atk-sys: gtk-rs GTK3 unmaintained; blocked on Tauri GTK4"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0417"
+reason = "gdkx11: gtk-rs GTK3 unmaintained; blocked on Tauri GTK4"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0418"
+reason = "gdk-sys: gtk-rs GTK3 unmaintained; blocked on Tauri GTK4"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0419"
+reason = "gtk3-macros: gtk-rs GTK3 unmaintained; blocked on Tauri GTK4"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0420"
+reason = "gtk-sys: gtk-rs GTK3 unmaintained; blocked on Tauri GTK4"
+
+# --- glib 0.18.5 unsoundness (CVSS 6.9) ---
+# Linux-only via Tauri; no direct call path. See .cargo/audit.toml.
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0429"
+reason = "glib 0.18.5 unsound VariantStrIter; Linux-only via Tauri; no direct call path; Tauri pins glib 0.18.x"
+
+# --- rand 0.7 + 0.8 unsoundness ---
+# Build-time only (phf perfect-hash generator); no runtime impact.
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0097"
+reason = "rand custom-logger unsoundness; build-time phf hash seeding only; our code does not install a custom panic handler calling rand"
+
+# --- Unmaintained advisories ---
+[[IgnoredVulns]]
+id = "RUSTSEC-2025-0057"
+reason = "fxhash: unmaintained; transitive; no security surface"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0370"
+reason = "proc-macro-error: unmaintained; compile-time only; no security surface"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2025-0075"
+reason = "unic-char-range: unmaintained; transitive via idna/url; no security surface"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2025-0080"
+reason = "unic-common: unmaintained; transitive via idna/url; no security surface"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2025-0081"
+reason = "unic-char-property: unmaintained; transitive via idna/url; no security surface"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2025-0098"
+reason = "unic-ucd-version: unmaintained; transitive via idna/url; no security surface"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2025-0100"
+reason = "unic-ucd-ident: unmaintained; transitive via idna/url; no security surface"

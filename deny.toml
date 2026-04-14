@@ -14,8 +14,13 @@ all-features = true
 
 [advisories]
 version = 2
-# cargo-audit handles the advisory feed in its own job; having it here too would be redundant
-# and noisy on double-hits. Leave the section so schema-version is pinned, but no rules.
+# Advisory scanning lives in the `cargo-audit` CI job. We do not run `cargo deny check
+# advisories` at all — the workflow invokes `cargo deny check licenses bans sources`.
+#
+# Reason: cargo-deny 0.18.x (pinned until the toolchain can move to 1.88.0 for 0.19.1)
+# chokes on CVSS 4.0 entries in the RustSec advisory DB, which has been shipping them
+# since 2026. cargo-audit has no such problem. We get the security signal from one
+# source rather than two, avoiding false-positive advisory-parse errors.
 ignore = []
 
 [licenses]
@@ -40,6 +45,13 @@ allow = [
 # Confidence threshold for license detection (0.0 to 1.0). Higher = stricter.
 confidence-threshold = 0.92
 exceptions = []
+
+# Internal workspace crates use `license = "Proprietary"`, which is not a valid SPDX
+# expression. Since all three carry `publish = false`, exempt them from the license check.
+# This is the idiomatic mechanism — not a silenced warning, but an intentional scoping of
+# cargo-deny's licence scrutiny to third-party dependencies where it actually matters.
+[licenses.private]
+ignore = true
 
 [bans]
 multiple-versions = "warn"

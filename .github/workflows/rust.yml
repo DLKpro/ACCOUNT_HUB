@@ -101,10 +101,13 @@ jobs:
       - name: Install cargo-deny
         uses: taiki-e/install-action@v2
         with:
-          tool: cargo-deny
+          # Pinned to 0.18.x — 0.19+ requires rustc 1.88.0+, newer than our pinned 1.85.0.
+          # Advisory parsing is skipped below because 0.18 can't handle CVSS 4.0 entries;
+          # the cargo-audit job is the source of truth for advisories.
+          tool: cargo-deny@0.18.3
 
-      - name: cargo deny check
-        run: cargo deny --all-features check
+      - name: cargo deny check (licenses + bans + sources; advisories handled by cargo-audit)
+        run: cargo deny --all-features check licenses bans sources
 
   osv-scan:
     name: osv-scanner (cross-ecosystem vuln feed)

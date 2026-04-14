@@ -54,7 +54,11 @@ Subsystem design order (ground up; each constrains the next):
 2. ✅ `docs/design/02-keychain-abstraction.md` — `SecretStore` trait + per-OS impls + keyfile fallback (accepted, ADR 0002)
 3. ✅ `docs/design/03-vault.md` — SQLCipher schema, KEK wrap, WAL, multi-process access (accepted, ADR 0003)
 4. ✅ `docs/design/04-oauth-providers.md` — `Provider` trait, loopback+PKCE, Apple relay, token lifecycle (accepted, ADR 0004)
-5. `docs/design/05-tauri-ipc.md` — command shapes, error envelope, type-sharing with frontend
+5. ✅ `docs/design/05-tauri-ipc.md` — command shapes, error envelope, type-sharing with frontend (accepted, ADR 0005)
+
+**All five ground-up design docs accepted.** Phase 2/3 implementation work is unblocked on
+the design-spec front; only Phase 0 procurement (Apple Developer ID, Windows EV cert) and
+Tauri-app scaffolding remain before Phase 1 can start.
 
 Design docs reference back to the plan and are updated if decisions shift.
 
@@ -205,6 +209,10 @@ months from now, the decision needs an ADR.
 | 2026-04-13 | Design doc 02 accepted | `docs/design/02-keychain-abstraction.md` + ADR 0002: async `SecretStore` trait, typed `SecretKey` constants, four production backends (`MacosKeychain` / `WindowsCredentialManager` / `LinuxSecretService` / `AgeKeyfile`) + `FakeKeychain` for tests. GUI never falls back to keyfile; CLI opts in via `--keyfile`. No biometric trait methods in v1. `panic = "abort"` accepted as out-of-scope for cold-boot memory attacks. First `AgeKeyfile` identity to ship = X25519 file. | Second in the ground-up design order; unblocks vault design 03 |
 | 2026-04-13 | Design doc 03 accepted | `docs/design/03-vault.md` + ADR 0003 + `crates/core/migrations/V0001__initial.sql`: SQLCipher via rusqlite + bundled-sqlcipher; single connection per vault serialized by `parking_lot::Mutex`; async bridge via `tokio::task::spawn_blocking`; WAL + `fs2` exclusive lock for rekey/migration; `refinery` for migrations; five surviving tables (`linked_email`, `oauth_state`, `scan_session`, `discovered_account`, `closure_request`); three auth-only tables retired not ported; no per-column encryption (SQLCipher whole-file is the answer); INTEGER unix-seconds timestamps; no user_id columns (single-user vault). | Third in the ground-up design order; centerpiece of the app's security posture |
 | 2026-04-13 | Design doc 04 accepted | `docs/design/04-oauth-providers.md` + ADR 0004: narrow `Provider` trait (4 methods + optional `revoke`); shared `OAuthFlow` orchestrator owns PKCE/state/nonce/loopback/vault; Microsoft switched from device-code to loopback+PKCE (device-code kept as corp-tenant fallback); Apple client secret is an ES256-signed JWT with 3-minute exp (not 6 months); Apple Worker relay cert-pinned via SHA-256 SPKI; state carries `:<loopback-port>` for Worker routing; `hyper` directly for loopback server (not axum); one shared `reqwest::Client` with rustls + webpki-roots; tokens carried as `SecretString` end-to-end; refresh scheduler runs under `UnlockedSession`. | Fourth in the ground-up design order; unblocks Phase 3 Rust OAuth port |
+| 2026-04-13 | Design doc 05 accepted | `docs/design/05-tauri-ipc.md` + ADR 0005: specta + tauri-specta for type sharing (TS bindings regenerate as part of build); coarse 7-variant `IpcError` envelope with redaction at the core → IPC boundary (no paths, tokens, stack traces, or internal types leak); long-running ops use command + event pairs (LinkHandle returned sync, completion via event) rather than blocking commands; `AppState = RwLock<Session> + Arc<dyn SecretStore> + reqwest::Client`; minimal Tauri capabilities (no shell-exec, no broad fs, no http plugin, no clipboard); runtime hardening with `withGlobalTauri: false` + `freezePrototype: true`; every command validates inputs even though webview ships with app. Full command catalog (session, linked_email, scan, closure) replaces the 22 `apiFetch` call sites in `web/src/api/*.ts`. | Fifth and final ground-up design; unblocks Phase 3 frontend cutover from `fetch` to `invoke()` |
+
+**All five ground-up design docs accepted as of 2026-04-13.** Design-spec work complete;
+subsequent revision-log entries are implementation-driven.
 
 ---
 

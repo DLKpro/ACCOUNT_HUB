@@ -125,10 +125,14 @@ All of these land in Phase 0 CI, not retrofitted later:
 - `cargo-deny` — license allowlist + dupe check + ban policy for risky crates.
 - `cargo-vet` — trust policy for dependency audits; required for all new deps.
 - `osv-scanner` — cross-ecosystem vuln feed (catches things `cargo-audit` misses).
-- npm: `pnpm audit` + `pnpm licenses list` in CI.
-- All deps pinned by hash: `Cargo.lock` and `pnpm-lock.yaml` committed; no range specifiers
-  in production `dependencies` blocks.
-- SBOM generated per release (CycloneDX, via `cargo-cyclonedx`).
+- npm: `npm audit --audit-level=high` + a licence allowlist (`scripts/check-npm-licenses.mjs`)
+  in CI, for `web/` and the repo-root lockfile.
+- All deps pinned by hash: `Cargo.lock` and the `package-lock.json` files committed; no range
+  specifiers in production `dependencies` blocks.
+  **Open (2026-11-05):** the second clause is not met. `web/package.json` and `Cargo.toml` use
+  caret ranges and rely on the lockfiles to pin. Decide: pin exact versions, or drop the clause.
+- SBOM generated per release (CycloneDX, via `cargo-cyclonedx`). Lands with the first release
+  build in Phase 1; there is no release to describe in Phase 0.
 - Signed commits enforced on `main`; 2-reviewer rule for anything touching `crates/core/src/`
   (crypto, keychain, vault).
 - Release signing keys in a hardware token or GitHub Environments with required reviewers.
@@ -170,7 +174,7 @@ months from now, the decision needs an ADR.
 | Phase | Status | Exit criteria met | Tag | Notes |
 |---|---|---|---|---|
 | Pre-Phase-0 (Worker extract) | Not started | — | — | Depends on new GitHub repo (user) |
-| Phase 0 (Scaffold + procurement) | In progress | code-side complete | — | Scaffold + local CI + CI-on-actual-PR + Tauri dev loop all green; only procurement + threat-model review outstanding |
+| Phase 0 (Scaffold + procurement) | In progress | code-side complete; §7 CI gaps closed; threat model reviewed | — | Outstanding: Windows EV cert and GPG key (both user procurement) |
 | Phase 1 (Hybrid shipping) | Not started | — | — | |
 | Phase 2 (Storage + secrets to Rust) | Not started | — | — | |
 | Phase 3 (Retire Python sidecar, port CLI) | Not started | — | — | |
@@ -187,8 +191,11 @@ months from now, the decision needs an ADR.
 - [x] `rust.yml` proven green on an actual PR (W1 push 2026-04-14, run 24420876164 → 6/6 matrix jobs green after Linux system-deps + per-ID advisory ignores landed).
 - [x] Tauri 2 config in `crates/gui/` (b71128a scaffold + W1 path fixes).
 - [x] `npm run tauri:dev` opens the React SPA in a Tauri window (verified 2026-04-14: Vite ready in 243 ms, dev build 12.92 s, `account-hub-gui` binary launched, curl :3000 → HTTP 200).
-- [ ] `docs/desktop-threat-model.md` reviewed at Phase 0 close (scheduled for when other exit items are met).
-- [ ] Apple Developer ID enrolled (user action — procurement).
+- [x] `cargo-vet` in CI: `supply-chain/` initialised, `vet` job runs `cargo vet --locked` (PR #6, 2026-11-05; 95 audited via imports, 367 baseline exemptions).
+- [x] npm audit + licence allowlist in CI for `web/` and the repo root (PR #6, 2026-11-05).
+- [x] `main` requires signed commits, enforced for admins; force-push and deletion blocked (branch protection, 2026-11-05).
+- [x] `docs/desktop-threat-model.md` reviewed at Phase 0 close (2026-11-05; see its review log. Sign-off is the merge of PR #6).
+- [x] Apple Developer ID enrolled: a valid `Developer ID Application` identity is in the login keychain (`security find-identity -v -p codesigning`, 2026-11-05). **Certificate expires 2027-02-01**; renew before the first signed release if Phase 1 runs past that.
 - [ ] Windows EV code-signing cert ordered (user action — procurement; long lead time).
 - [ ] GPG key for AppImage signatures generated (user action).
 
@@ -221,6 +228,9 @@ months from now, the decision needs an ADR.
 | 2026-04-14 | §9 Phase Ledger | Phase 0 ledger advanced to "code-side complete" (was 3/4); `rust.yml proven green on actual PR` box ticked. Only procurement + threat-model review remain before Phase 0 close. | Reflects the real state post-W1 |
 | 2026-11-05 | Advisory refresh / `Cargo.lock` | First session in ~7 months. Code was unchanged, but today's advisory DB failed `cargo audit` and `osv-scanner` on 6 advisories in 5 crates: tauri 2.10.3 (GHSA-7gmj-67g7-phm9, CVSS 8.8), quick-xml 0.38.4 (RUSTSEC-2026-0194/0195, 7.5, via plist), serde_with 3.18.0 (GHSA-7gcf-g7xr-8hxj), tokio 1.51.1 (RUSTSEC-2026-0386, unsound), anyhow 1.0.102 (RUSTSEC-2026-0190, unsound). Fixed by lockfile update only, no manifest change: `cargo update -p tauri -p tauri-build -p tokio -p anyhow -p serde_with -p plist` → tauri 2.12.5, plist 1.10.3 / quick-xml 0.42.0, serde_with 3.24.0, tokio 1.54.1, anyhow 1.0.104. **Lesson:** the tauri family (tauri, -build, -macros, -codegen, -runtime, -runtime-wry, -utils) must move together. Pinning `tauri --precise 2.11.1` let the resolver pick tauri-runtime 2.12 / tauri-macros 2.7 (built for tauri 2.12) and broke compilation inside tauri itself (`primary_monitor` Option→Result; missing `Error::UnexpectedMenuKind`). Old CI runs cannot be re-run after 30 days, so drift is only caught by a fresh push. | Root-cause fix: upgrade, not ignore |
 | 2026-11-05 | Quarterly advisory review (Jul + Oct missed) | Reviewed by moving `.cargo/audit.toml` aside and diffing fired IDs against the ignore list. Removed 17 of 19 ignores from both files: RUSTSEC-2024-0411..0420 (gtk-rs GTK3) were **withdrawn by RustSec 2026-08-14** because gtk-rs development resumed, though gtk 0.18.2 remains in the tree; RUSTSEC-2026-0097 (rand 0.7/0.8), 2025-0057 (fxhash), and 2025-0075/0080/0081/0098/0100 (unic-*) left the tree with tauri 2.12. Kept and re-validated: RUSTSEC-2024-0429 (glib 0.18.5) and 2024-0370 (proc-macro-error). The local fmt / clippy / test / doc / deny / audit / osv suite is green, and `npm run tauri:dev` was re-verified on tauri 2.12.5 (build 12.79 s, binary launched, :3000 → 200). | Stale ignores hide nothing today but would silently mask a re-filed advisory |
+| 2026-11-05 | §7 gaps closed (PR #6) | Review at Phase 0 close found that §7's "land in Phase 0 CI" list was only half built: cargo-vet, the npm checks and signed commits did not exist, and the threat model listed cargo-vet as a live defence. Added: (1) cargo-vet 0.10.3 with audits imported from Mozilla, Google and the Bytecode Alliance; 367 exemptions are the baseline, so vet gates new and changed crates only. (2) `web.yml`: `npm audit --audit-level=high` for `web/` and root, plus a lockfile licence allowlist with per-package exceptions (lightningcss MPL-2.0, caniuse-lite CC-BY-4.0, argparse Python-2.0). (3) Branch protection on `main`: signed commits required, admins included. CI is deliberately not a required check, because Rust CI is path-filtered and a required check that never starts blocks a docs-only PR forever. SBOM moved to Phase 1. | A stated control that does not exist is worse than no claim |
+| 2026-11-05 | `web/package-lock.json` | `npm audit` on `web/` showed 20 advisories (10 high, 3 in shipped code: react-router, react-router-dom, zod). `npm audit fix` with in-range updates only cleared all high: react-router-dom 7.18.5, zod 4.6.7, vite 8.3.6. **Accepted, review quarterly:** 7 moderate, all GHSA-g3hv-75wg-m249 (minimatch 10.x DoS) inside `@typescript-eslint/typescript-estree`; typescript-eslint 8.72.1 (latest) still depends on it; lint tooling only, patterns are our own. **Not addressed:** `npm run lint` in `web/` fails on 2 `react-hooks/set-state-in-effect` errors (`page-transition.tsx`, `verify-email.tsx`), identical on `main` before this change; web lint is not in CI. `legal/` (wrangler ^3, dev-only) has 8 advisories fixed by wrangler 4, a major upgrade of the deploy tool for a live Worker; left for a deliberate change. | Same drift as the Rust side; npm had never been audited in CI |
+| 2026-11-05 | Threat model review | See `docs/desktop-threat-model.md` review log. Decisions: audience is the author and self-hosters (A4 is each person's own `.p8`); `dlopro.com` is author-owned and stays the Apple relay domain (new asset A9). Added the loopback-callback threat, the signed-commit row, and the `core:default` growth trigger. | Phase 0 exit item |
 
 **All five ground-up design docs accepted as of 2026-04-13.** Design-spec work complete;
 subsequent revision-log entries are implementation-driven.

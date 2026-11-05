@@ -1,8 +1,14 @@
 # ACCOUNT_HUB Desktop — Threat Model
 
 > Phase 0 deliverable. Reviewed at Phase 0 close; revised at each phase boundary.
-> Companion to the migration plan (`~/.claude/plans/woolly-coalescing-dragon.md`) and
-> quality gates (`docs/quality-gates.md`).
+> Companion to the quality gates (`docs/quality-gates.md`) and design docs 01–05
+> (`docs/design/`). The original migration plan lived outside the repo and no longer
+> exists; the phase ledger in quality-gates §9 is the plan of record.
+>
+> **Audience (decided 2026-11-05):** ACCOUNT_HUB is a personal tool for its author and
+> for self-hosters. Each person runs their own build with their own provider credentials.
+> It is not distributed to end users with shared credentials; if that changes, A4, A6 and
+> T7 must be re-modelled before any release.
 
 ## Scope
 
@@ -18,11 +24,12 @@ of the same threats plus migration-specific ones called out inline.
 | A1 | **Vault encryption key (KEK)** | Unlocks everything. Compromise = full OAuth token exposure → attacker can read user's mail, modify Meta account, etc. |
 | A2 | **OAuth access + refresh tokens** | Per-provider blast radius; refresh tokens allow persistent access even after password changes. |
 | A3 | **Master password (in memory, pre-zeroize)** | Derives KEK. Brief exposure window during unlock. |
-| A4 | **Apple private key** (OAuth client secret signer) | Allows impersonation of the ACCOUNT_HUB app to Apple; blast radius = Apple OAuth only but would allow account takeover of any Apple-linked user. |
+| A4 | **Apple private key** (OAuth client secret signer) | Each self-hoster's **own** `.p8`, issued by their own Apple developer account and imported into their OS keychain (design 04). It never ships with the app and is never shared between users. Compromise allows impersonation of that person's Apple client ID; blast radius = their own Apple OAuth registration. |
 | A5 | **Discovered-account catalog** (vault contents) | Reveals user's online footprint; sensitive even without live tokens. |
 | A6 | **Cloudflare Worker deploy key** | Compromise allows attacker to redirect Apple OAuth callbacks to their own listener → phishing + token theft. |
 | A7 | **App signing keys** (Apple Developer ID, Windows EV, GPG) | Compromise allows attacker to ship malicious updates that the updater will trust. |
 | A8 | **Ed25519 auto-updater key** | Same blast radius as A7 but specific to the Tauri updater channel. |
+| A9 | **`dlopro.com` domain registration** | The Apple OAuth relay lives at `dlopro.com/callback` and Apple redirects the browser there. The domain is owned by the author (confirmed 2026-11-05; distinct from the DLO Pro site at `dlopro.ca`). If the registration lapses, a new owner receives Apple callbacks: Apple sign-in breaks, and the callback URL can serve a phishing page. PKCE and the SPKI pin stop a new owner from redeeming codes or impersonating the relay to the app. Keep on auto-renew with registrar lock. |
 
 ## Adversaries — who might want these
 
@@ -80,6 +87,7 @@ IPC handler validates its inputs; the Rust core never assumes webview-supplied d
 | T2 spoofs `accounthub://` deep links from a malicious webpage | Deep-link handler verifies a signed nonce for sensitive operations; read-only navigation (e.g. "open settings") is allowed without a nonce. |
 | T7 spoofs Apple OAuth callback via compromised Worker | Certificate-pin `dlopro.com` in rustls client config; the Worker is a trusted relay, but its TLS cert is one we control and verify. The OAuth `state` carries both a random nonce AND a port binding the relay must echo. |
 | T8 registers a rival `accounthub://` handler | OS-specific mitigation: prefer `LSHandlers` (macOS) / registered AppUserModelID (Windows) / explicit `.desktop` file with app ID (Linux). Document for users that handler collision is detectable. |
+| T2 / T3 hits the OAuth loopback callback (`http://127.0.0.1:<port>/callback`, used by Google, Microsoft, Meta and the Apple relay hand-off): a webpage sends a forged request to it, or a local process guesses or races for the port | The listener binds `127.0.0.1:0` only (kernel-assigned port, never `0.0.0.0`), lives for one flow, and accepts one request. A callback is honoured only if `state` matches the value generated for that flow; the code is useless without the PKCE verifier, which never leaves the core process. A forged or replayed callback fails the `state` check and ends the flow with an error, so the worst case is a failed link attempt (DoS), not token theft. Residual: a local process that wins the port *before* the app binds cannot receive the redirect, because the port is chosen at bind time and only then placed in the redirect URI. |
 
 ### Tampering
 
@@ -87,7 +95,8 @@ IPC handler validates its inputs; the Rust core never assumes webview-supplied d
 |---|---|
 | T3 modifies vault.db on disk | SQLCipher HMAC detects tampering; open fails with "file is not a database". |
 | T3 modifies app binary to leak KEK | App binary signed; macOS Gatekeeper + Windows SmartScreen + Linux GPG verification detects tampering at launch. |
-| T5 ships backdoored dependency | `cargo-audit`, `cargo-deny`, `cargo-vet`, `osv-scanner` in CI; all deps pinned by hash; SBOM per release. |
+| T5 ships backdoored dependency | **In place (CI):** `cargo-audit`, `cargo-deny`, `cargo-vet --locked` and `osv-scanner` for Rust; `npm audit --audit-level=high` and a licence allowlist for `web/` and the root npm lockfile. `Cargo.lock` and the `package-lock.json` files are committed and carry integrity hashes. **Limits:** cargo-vet started from a baseline of exemptions (367 crates trusted as-is on 2026-11-05), so it gates *new and changed* crates, not the existing tree; advisories appear without a code change, so a quiet repo drifts until the next push or a manual run. **Not yet in place:** SBOM per release (lands with the first release build, Phase 1). |
+| T5 or a stolen GitHub session pushes an unsigned commit to `main` | `main` requires signed commits, enforced for admins; force-pushes and branch deletion are blocked (branch protection, 2026-11-05). CI is not a required check (Rust CI is path-filtered), so a signed commit can still land red. |
 | T5 backdoors auto-updater delivery | Tauri updater verifies Ed25519 signature (A8) before applying; public key pinned at compile time. |
 
 ### Repudiation
@@ -120,7 +129,7 @@ IPC handler validates its inputs; the Rust core never assumes webview-supplied d
 | Threat | Mitigation |
 |---|---|
 | T2 via webview XSS invokes privileged IPC | Strict CSP; no `eval`, no `unsafe-inline`; all IPC commands validate inputs and require an unlocked-vault state where appropriate. |
-| T3 escalates via Tauri bug to OS level | Tauri capabilities minimized; no blanket `fs:allow-*`; only specific paths granted. Follow Tauri CVE feed. |
+| T3 escalates via Tauri bug to OS level | Tauri capabilities minimized; no blanket `fs:allow-*`; only specific paths granted. Follow Tauri CVE feed. The only capability today is `core:default` (`crates/gui/capabilities/default.json`). **That set is defined by Tauri, not by us, and grows with Tauri releases:** 2.10 → 2.12 added `app:supports_multiple_windows`, `tray:set_icon_with_as_template`, `window:activity_name` and `window:scene_identifier` with no change to our file. Review trigger: any diff in `crates/gui/gen/schemas/acl-manifests.json`. Before Phase 3 adds real IPC commands, replace `core:default` with an explicit list. |
 | T5 in a dev dep escalates during build | Build runs in an isolated CI environment; release builds from clean tags; no `build.rs` that phones home or writes outside target/. |
 
 ## Migration-specific transitional threats (Phase 1 & 2 only)
@@ -156,3 +165,4 @@ IPC handler validates its inputs; the Rust core never assumes webview-supplied d
 | Date | Reviewer | Phase | Notes |
 |---|---|---|---|
 | 2026-04-13 | — | Phase 0 draft | Initial model |
+| 2026-11-05 | Derek (decisions); Claude (cross-check against design docs 01–05 and CI) | Phase 0 close | Decisions: audience is the author and self-hosters, so A4 is each person's own `.p8`; `dlopro.com` is owned by the author and stays the relay domain (new asset A9). Corrections: the supply-chain row claimed cargo-vet and hash-pinning that were not in CI, now added and stated with their limits; SBOM marked as not yet in place; broken link to an out-of-repo plan removed. Additions: loopback-callback threat, signed-commit row, `core:default` growth and its review trigger. Sign-off is the merge of the PR carrying this row. |

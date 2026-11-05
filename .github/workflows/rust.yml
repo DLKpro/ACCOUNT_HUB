@@ -14,6 +14,7 @@ on:
       - "deny.toml"
       - "osv-scanner.toml"
       - ".cargo/**"
+      - "supply-chain/**"
       - ".github/workflows/rust.yml"
   pull_request:
     branches: [main]
@@ -25,6 +26,7 @@ on:
       - "deny.toml"
       - "osv-scanner.toml"
       - ".cargo/**"
+      - "supply-chain/**"
       - ".github/workflows/rust.yml"
 
 concurrency:
@@ -140,3 +142,35 @@ jobs:
           scan-args: |-
             --config=./osv-scanner.toml
             --lockfile=./Cargo.lock
+
+  vet:
+    name: cargo-vet (dependency audit policy)
+    runs-on: ubuntu-latest
+    env:
+      CARGO_VET_VERSION: "0.10.3"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.94.1"
+
+      - name: Cache cargo-vet binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/cargo-vet
+          key: cargo-vet-${{ runner.os }}-${{ env.CARGO_VET_VERSION }}
+
+      - name: Install cargo-vet
+        run: |
+          if ! command -v cargo-vet >/dev/null 2>&1; then
+            cargo install --locked --version "$CARGO_VET_VERSION" cargo-vet
+          fi
+
+      # Every crate in Cargo.lock must be audited (supply-chain/audits.toml or an
+      # imported audit set) or listed as an exemption in supply-chain/config.toml.
+      # --locked uses supply-chain/imports.lock as committed; CI never fetches
+      # new imports. A new or bumped dependency fails here until it is vetted.
+      - name: cargo vet
+        run: cargo vet --locked

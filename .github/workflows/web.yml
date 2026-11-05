@@ -1,0 +1,68 @@
+name: Web CI
+
+# npm supply-chain checks for the frontend (web/) and the Tauri CLI wrapper
+# (repo root). See docs/quality-gates.md §7.
+#
+# legal/ (Cloudflare Worker for the legal pages) is not covered: its only
+# dependency is the wrangler CLI, a dev tool that never ships.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/package.json"
+      - "web/package-lock.json"
+      - "package.json"
+      - "package-lock.json"
+      - "scripts/check-npm-licenses.mjs"
+      - ".github/workflows/web.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "web/package.json"
+      - "web/package-lock.json"
+      - "package.json"
+      - "package-lock.json"
+      - "scripts/check-npm-licenses.mjs"
+      - ".github/workflows/web.yml"
+  # Advisories appear without any code change; this lets the checks be re-run
+  # by hand long after the last push.
+  workflow_dispatch:
+
+concurrency:
+  group: web-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  npm-audit:
+    name: npm audit (${{ matrix.dir }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dir: [web, "."]
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      # Reads the lockfile only; no install needed. Fails on high or critical.
+      # Moderate findings are reviewed quarterly with the Rust advisory ignores.
+      - name: npm audit (high and above)
+        working-directory: ${{ matrix.dir }}
+        run: npm audit --audit-level=high
+
+  npm-licenses:
+    name: npm licence allowlist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Check licences against the allowlist
+        run: node scripts/check-npm-licenses.mjs web/package-lock.json package-lock.json

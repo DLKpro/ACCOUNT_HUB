@@ -34,5 +34,13 @@ else
   echo "==> cargo-deny not installed locally; skipping (CI will run it)"
 fi
 
+# cargo-vet is optional locally — install with: cargo install cargo-vet --locked --version 0.10.3
+if command -v cargo-vet >/dev/null 2>&1; then
+  echo "==> cargo vet --locked"
+  cargo vet --locked
+else
+  echo "==> cargo-vet not installed locally; skipping (CI will run it)"
+fi
+
 echo
 echo "All checks green."
